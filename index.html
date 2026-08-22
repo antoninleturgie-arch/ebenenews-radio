@@ -228,10 +228,29 @@ footer {
     padding: 15px;
     border-radius: 8px;
     border-left: 3px solid #d4af37;
-    min-height: 60px;
+    min-height: 80px;
     display: flex;
     align-items: center;
     font-size: 16px;
+    font-style: italic;
+}
+
+.ia-audio-player {
+    margin-top: 15px;
+    padding: 15px;
+    background: #0a0a0a;
+    border-radius: 8px;
+}
+
+.ia-audio-player audio {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.ia-status {
+    font-size: 12px;
+    color: #d4af37;
+    margin-top: 8px;
 }
 
 </style>
@@ -396,7 +415,7 @@ footer {
         </div>
     </section>
 
-    <!-- IA -->
+    <!-- IA ANIMATEUR -->
     <section class="card">
         <h2>🤖 Animateur Ébénénews</h2>
 
@@ -404,8 +423,14 @@ footer {
             🎙️ Bienvenue sur Ébénénews 72.8 !
         </div>
 
-        <button onclick="annonceIA()" style="margin-top: 15px;">
-            🎙️ Lancer une annonce
+        <div class="ia-audio-player">
+            <h3 style="margin-top: 0;">🔊 Lecture de l'annonce</h3>
+            <audio id="iaAudio" controls style="width: 100%;"></audio>
+            <div class="ia-status" id="iaStatus">Prêt à diffuser</div>
+        </div>
+
+        <button onclick="lancerAnnounceIA()" style="width: 100%; margin-top: 15px;">
+            🎙️ Lancer une annonce vocale
         </button>
     </section>
 
@@ -615,7 +640,7 @@ function escapeHTML(text) {
 }
 
 /* =========================
-   ADMIN - CORRIGÉ
+   ADMIN
 ========================= */
 
 function ouvrirAdmin() {
@@ -671,32 +696,64 @@ function messageAdmin() {
 }
 
 /* =========================
-   IA - CORRIGÉ
+   IA ANIMATEUR - AVEC SYNTHÈSE VOCALE
 ========================= */
 
-const annonces = [
-    "🎙️ Bienvenue sur Ébénénews 72.8 !",
-    "🎵 Vous écoutez Ébénénews, votre radio en ligne.",
-    "📻 Merci d'être avec nous sur Ébénénews 72.8.",
-    "🎶 La musique continue sur Ébénénews !",
-    "📢 Restez avec nous pour la suite du programme.",
-    "🎧 Excellent choix de station !",
-    "⭐ Ébénénews, c'est du bon son !",
-    "🎙️ Bienvenue auditeur !",
-    "🌟 Merci de nous écouter !",
-    "🔥 On va vous régaler avec nos meilleurs hits !",
-    "💫 Ébénénews, la meilleure radio !",
-    "🎵 La musique c'est la vie !"
+const annoncesInfo = [
+    "Bienvenue sur Ébénénews 72.8, la meilleure radio en ligne !",
+    "Vous écoutez Ébénénews, votre radio musicale préférée.",
+    "Merci de nous écouter sur Ébénénews 72.8 FM.",
+    "La musique continue sans interruption sur Ébénénews !",
+    "Restez avec nous pour le meilleur du divertissement.",
+    "Ébénénews, votre compagnon musical quotidien.",
+    "Flash info : La musique est le meilleur remède !",
+    "Vous êtes en direct sur Ébénénews 72.8.",
+    "Merci d'avoir choisi Ébénénews pour vos moments musicaux.",
+    "Continuez à nous écouter pour la meilleure sélection musicale !"
 ];
 
-function annonceIA() {
-    const randomIndex = Math.floor(Math.random() * annonces.length);
-    const message = annonces[randomIndex];
+// Synthèse vocale
+const synth = window.speechSynthesis;
+
+function lancerAnnounceIA() {
+    // Arrêter la synthèse précédente si en cours
+    if(synth.speaking) {
+        synth.cancel();
+    }
+
+    // Sélectionner une annonce aléatoire
+    const randomIndex = Math.floor(Math.random() * annoncesInfo.length);
+    const message = annoncesInfo[randomIndex];
     
-    const elem = document.getElementById("iaMessage");
-    elem.innerText = message;
+    // Afficher le texte
+    document.getElementById("iaMessage").innerText = "🎙️ " + message;
+    document.getElementById("iaStatus").innerText = "📻 En direct...";
     
-    console.log('Annonce IA affichée:', message);
+    // Créer une utterance pour la synthèse vocale
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = 'fr-FR'; // Français
+    utterance.rate = 0.9; // Vitesse normale
+    utterance.pitch = 1; // Hauteur normale
+    utterance.volume = 1; // Volume maximum
+    
+    // Événements
+    utterance.onstart = () => {
+        console.log('Annonce en cours de lecture...');
+        document.getElementById("iaStatus").innerText = "🔊 Annonce vocale en direct...";
+    };
+    
+    utterance.onend = () => {
+        console.log('Annonce terminée');
+        document.getElementById("iaStatus").innerText = "✅ Annonce terminée";
+    };
+    
+    utterance.onerror = (event) => {
+        console.error('Erreur synthèse vocale:', event);
+        document.getElementById("iaStatus").innerText = "❌ Erreur de synthèse vocale";
+    };
+    
+    // Lancer la synthèse vocale
+    synth.speak(utterance);
 }
 
 /* INITIALISATION */
@@ -706,6 +763,7 @@ window.addEventListener('load', function() {
     updateStatsDisplay();
     console.log('Stats chargées');
     console.log('Admin démo: admin / ebene72');
+    console.log('IA: Synthèse vocale activée');
 });
 
 </script>
