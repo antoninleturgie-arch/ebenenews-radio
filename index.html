@@ -78,17 +78,6 @@ button:hover {
     opacity: .8;
 }
 
-nav {
-    text-align: center;
-    margin: 25px 0;
-}
-
-nav button {
-    background: #222;
-    color: white;
-    border: 1px solid #d4af37;
-}
-
 #titre {
     text-align: center;
 }
@@ -142,7 +131,6 @@ footer {
     color: #777;
 }
 
-/* STATISTIQUES */
 .stat-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -219,15 +207,31 @@ footer {
     color: #ffd700;
 }
 
+.admin-login-form {
+    display: block;
+}
+
+.admin-login-form.hidden {
+    display: none;
+}
+
 .admin-dashboard {
     display: none;
 }
 
-.admin-dashboard button {
+.admin-dashboard.show {
     display: block;
-    width: 100%;
-    margin: 10px 0;
-    text-align: left;
+}
+
+#iaMessage {
+    background: #0a0a0a;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #d4af37;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
 }
 
 </style>
@@ -348,37 +352,45 @@ footer {
     <section class="card">
         <h2>🔐 Administration</h2>
 
-        <button onclick="ouvrirAdmin()">
+        <button id="btnOuvrirAdmin" onclick="ouvrirAdmin()">
             Connexion admin
         </button>
 
         <div id="adminPanel" class="admin-panel">
-            <h3>Connexion</h3>
-            <input
-                id="adminUser"
-                type="text"
-                placeholder="Identifiant"
-            >
+            
+            <div id="adminLoginForm" class="admin-login-form">
+                <h3>Connexion Administrateur</h3>
+                
+                <input
+                    id="adminUser"
+                    type="text"
+                    placeholder="Identifiant"
+                />
 
-            <input
-                id="adminPassword"
-                type="password"
-                placeholder="Mot de passe"
-            >
+                <input
+                    id="adminPassword"
+                    type="password"
+                    placeholder="Mot de passe"
+                />
 
-            <button onclick="connexionAdmin()">
-                Se connecter
-            </button>
+                <button onclick="connexionAdmin()">
+                    Se connecter
+                </button>
+                
+                <p style="color: #999; font-size: 12px; margin-top: 10px;">
+                    Demo: admin / ebene72
+                </p>
+            </div>
 
             <div id="adminDashboard" class="admin-dashboard">
-                <h3>🛠️ Tableau de bord</h3>
+                <h3>🛠️ Tableau de bord Administrateur</h3>
 
-                <button onclick="messageAdmin()">
+                <button onclick="messageAdmin()" style="width: 100%; text-align: left;">
                     📢 Envoyer une annonce
                 </button>
 
-                <button onclick="fermerAdmin()" style="background: #999;">
-                    Déconnexion
+                <button onclick="fermerAdmin()" style="width: 100%; text-align: left; background: #999;">
+                    🚪 Déconnexion
                 </button>
             </div>
         </div>
@@ -388,11 +400,11 @@ footer {
     <section class="card">
         <h2>🤖 Animateur Ébénénews</h2>
 
-        <p id="iaMessage" style="background: #0a0a0a; padding: 15px; border-radius: 8px; border-left: 3px solid #d4af37;">
+        <div id="iaMessage">
             🎙️ Bienvenue sur Ébénénews 72.8 !
-        </p>
+        </div>
 
-        <button onclick="annonceIA()">
+        <button onclick="annonceIA()" style="margin-top: 15px;">
             🎙️ Lancer une annonce
         </button>
     </section>
@@ -603,39 +615,47 @@ function escapeHTML(text) {
 }
 
 /* =========================
-   ADMIN
+   ADMIN - CORRIGÉ
 ========================= */
 
 function ouvrirAdmin() {
-    document.getElementById("adminPanel").style.display = "block";
-    document.getElementById("adminDashboard").style.display = "none";
+    const panel = document.getElementById("adminPanel");
+    const form = document.getElementById("adminLoginForm");
+    
+    if(panel.style.display === "none" || panel.style.display === "") {
+        panel.style.display = "block";
+        form.style.display = "block";
+    } else {
+        panel.style.display = "none";
+        form.style.display = "block";
+    }
 }
 
 function connexionAdmin() {
-    const user = document.getElementById("adminUser").value.trim();
+    const user = document.getElementById("adminUser").value;
     const password = document.getElementById("adminPassword").value;
-
-    console.log('Tentative connexion - User:', user, 'Pass:', password);
+    
+    console.log("Tentative connexion:", user, password);
 
     if(user === "admin" && password === "ebene72") {
+        console.log("Connexion réussie !");
+        document.getElementById("adminLoginForm").style.display = "none";
         document.getElementById("adminDashboard").style.display = "block";
-        document.getElementById("adminUser").style.display = "none";
-        document.getElementById("adminPassword").style.display = "none";
-        document.querySelectorAll("#adminPanel > button")[0].style.display = "none";
         alert("✅ Connexion réussie !");
     } else {
-        alert("❌ Identifiant ou mot de passe incorrect.\nUtilisez: admin / ebene72");
+        alert("❌ Identifiant ou mot de passe incorrect.\n\nUtilisez:\nIdentifiant: admin\nMot de passe: ebene72");
+        document.getElementById("adminUser").value = "";
+        document.getElementById("adminPassword").value = "";
     }
 }
 
 function fermerAdmin() {
+    console.log("Déconnexion admin");
+    document.getElementById("adminLoginForm").style.display = "block";
     document.getElementById("adminDashboard").style.display = "none";
-    document.getElementById("adminPanel").style.display = "none";
     document.getElementById("adminUser").value = "";
     document.getElementById("adminPassword").value = "";
-    document.getElementById("adminUser").style.display = "block";
-    document.getElementById("adminPassword").style.display = "block";
-    document.querySelectorAll("#adminPanel > button")[0].style.display = "block";
+    document.getElementById("adminPanel").style.display = "none";
 }
 
 function messageAdmin() {
@@ -651,7 +671,7 @@ function messageAdmin() {
 }
 
 /* =========================
-   IA
+   IA - CORRIGÉ
 ========================= */
 
 const annonces = [
@@ -664,20 +684,29 @@ const annonces = [
     "⭐ Ébénénews, c'est du bon son !",
     "🎙️ Bienvenue auditeur !",
     "🌟 Merci de nous écouter !",
-    "🔥 On va vous régaler avec nos meilleurs hits !"
+    "🔥 On va vous régaler avec nos meilleurs hits !",
+    "💫 Ébénénews, la meilleure radio !",
+    "🎵 La musique c'est la vie !"
 ];
 
 function annonceIA() {
-    const message = annonces[Math.floor(Math.random() * annonces.length)];
+    const randomIndex = Math.floor(Math.random() * annonces.length);
+    const message = annonces[randomIndex];
+    
     const elem = document.getElementById("iaMessage");
     elem.innerText = message;
-    console.log('Annonce affichée:', message);
+    
+    console.log('Annonce IA affichée:', message);
 }
 
 /* INITIALISATION */
-loadStats();
-updateStatsDisplay();
-console.log('Radio Ébénénews chargée !');
+window.addEventListener('load', function() {
+    console.log('=== Ébénénews 72.8 Chargée ===');
+    loadStats();
+    updateStatsDisplay();
+    console.log('Stats chargées');
+    console.log('Admin démo: admin / ebene72');
+});
 
 </script>
 
