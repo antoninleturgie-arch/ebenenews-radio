@@ -1,781 +1,208 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ébénénews 72.8</title>
-
-<style>
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    background: #070707;
-    color: white;
-    font-family: Arial, sans-serif;
-}
-
-header {
-    background: linear-gradient(135deg, #111, #1c1c1c);
-    border-bottom: 2px solid #d4af37;
-    padding: 35px 20px;
-    text-align: center;
-}
-
-.logo {
-    font-size: 42px;
-    font-weight: bold;
-    color: #d4af37;
-}
-
-.frequency {
-    font-size: 20px;
-    margin-top: 8px;
-}
-
-.container {
-    max-width: 900px;
-    margin: auto;
-    padding: 25px;
-}
-
-.card {
-    background: #141414;
-    border: 1px solid #333;
-    border-radius: 18px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 5px 25px rgba(0,0,0,.4);
-}
-
-h2 {
-    color: #d4af37;
-}
-
-audio {
-    width: 100%;
-    margin: 15px 0;
-}
-
-button {
-    background: #d4af37;
-    color: #111;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    margin: 5px;
-}
-
-button:hover {
-    opacity: .8;
-}
-
-nav {
-    text-align: center;
-    margin: 25px 0;
-}
-
-nav button {
-    background: #222;
-    color: white;
-    border: 1px solid #d4af37;
-}
-
-#titre {
-    text-align: center;
-}
-
-.chat-box {
-    height: 220px;
-    background: #090909;
-    border-radius: 10px;
-    padding: 15px;
-    overflow-y: auto;
-    margin-bottom: 10px;
-}
-
-.chat-input {
-    display: flex;
-    gap: 8px;
-}
-
-.chat-input input {
-    flex: 1;
-    padding: 12px;
-    border-radius: 8px;
-    border: none;
-}
-
-.message {
-    padding: 8px;
-    border-bottom: 1px solid #222;
-}
-
-.admin-panel {
-    display: none;
-}
-
-.admin-panel input {
-    width: 100%;
-    padding: 12px;
-    margin: 6px 0;
-    border-radius: 8px;
-    border: none;
-}
-
-footer {
-    text-align: center;
-    padding: 30px;
-    color: #777;
-}
-
-/* STATISTIQUES */
-.stat-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.stat-box {
-    background: #0a0a0a;
-    border: 1px solid #d4af37;
-    border-radius: 12px;
-    padding: 15px;
-    text-align: center;
-}
-
-.stat-value {
-    font-size: 28px;
-    font-weight: bold;
-    color: #d4af37;
-    margin: 10px 0;
-}
-
-.stat-label {
-    font-size: 12px;
-    color: #999;
-    text-transform: uppercase;
-}
-
-.stat-info {
-    font-size: 14px;
-    color: #ccc;
-    margin-top: 8px;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 10px;
-    background: #222;
-    border-radius: 5px;
-    overflow: hidden;
-    margin-top: 10px;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #d4af37, #ffd700);
-    width: 0%;
-    transition: width 0.3s ease;
-}
-
-.playlist-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.playlist-item {
-    background: #0a0a0a;
-    border-radius: 8px;
-    padding: 12px;
-    text-align: center;
-    border-left: 3px solid #d4af37;
-}
-
-.playlist-name {
-    font-weight: bold;
-    color: #d4af37;
-    margin-bottom: 5px;
-}
-
-.playlist-count {
-    font-size: 18px;
-    color: #ffd700;
-}
-
-</style>
-</head>
-
-<body>
-
-<header>
-    <div class="logo">📻 ÉBÉNÉNEWS</div>
-    <div class="frequency">72.8 — LA RADIO EN LIGNE</div>
-</header>
-
-<div class="container">
-
-    <!-- RADIO -->
-    <section class="card">
-        <h2>🔴 DIRECT</h2>
-
-        <h3 id="titre">Prêt à écouter</h3>
-
-        <audio id="radio" controls preload="metadata"></audio>
-
-        <div style="text-align:center;">
-            <button onclick="playRadio()">▶️ Écouter</button>
-            <button onclick="pauseRadio()">⏸️ Pause</button>
-            <button onclick="previousMusic()">⏮️ Précédent</button>
-            <button onclick="nextMusic()">⏭️ Suivant</button>
-        </div>
-    </section>
-
-    <!-- STATISTIQUES -->
-    <section class="card">
-        <h2>📊 Statistiques d'écoute</h2>
-
-        <div class="stat-grid">
-            <div class="stat-box">
-                <div class="stat-label">Temps d'écoute total</div>
-                <div class="stat-value" id="totalTime">0m</div>
-                <div class="stat-info">Session actuelle</div>
-            </div>
-
-            <div class="stat-box">
-                <div class="stat-label">Écoutes aujourd'hui</div>
-                <div class="stat-value" id="listenCount">0</div>
-                <div class="stat-info">Nombre de chansons</div>
-            </div>
-
-            <div class="stat-box">
-                <div class="stat-label">Temps actuellement</div>
-                <div class="stat-value" id="currentTime">0:00</div>
-                <div class="stat-info">Morceau en lecture</div>
-            </div>
-
-            <div class="stat-box">
-                <div class="stat-label">Durée moyenne</div>
-                <div class="stat-value" id="avgDuration">0m</div>
-                <div class="stat-info">Par chanson</div>
-            </div>
-        </div>
-
-        <!-- Barre de progression globale -->
-        <div style="margin-top: 20px;">
-            <p style="margin: 0 0 10px 0; color: #999; font-size: 12px;">📈 Progression d'écoute globale</p>
-            <div class="progress-bar">
-                <div class="progress-fill" id="globalProgress"></div>
-            </div>
-            <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;" id="progressText">0/0</p>
-        </div>
-
-        <!-- Classement des chansons -->
-        <div style="margin-top: 20px;">
-            <h3 style="color: #d4af37; margin-top: 25px;">🎵 Top des chansons écoutées</h3>
-            <div class="playlist-stats" id="playlistStats"></div>
-        </div>
-
-        <!-- Bouton pour réinitialiser -->
-        <div style="text-align: center; margin-top: 20px;">
-            <button onclick="resetStats()" style="background: #d4af37; color: #111;">🔄 Réinitialiser statistiques</button>
-            <button onclick="exportStats()" style="background: #333; color: #d4af37; border: 1px solid #d4af37;">💾 Exporter les données</button>
-        </div>
-    </section>
-
-    <!-- PROGRAMME -->
-    <section class="card">
-        <h2>📅 Programme</h2>
-
-        <p>🎵 Musique — maintenant</p>
-        <p>📰 Flash Ébénénews</p>
-        <p>🤖 Animation IA</p>
-        <p>🎙️ Émission en direct</p>
-    </section>
-
-    <!-- CHAT -->
-    <section class="card">
-        <h2>💬 Chat Ébénénews</h2>
-
-        <div id="chatBox" class="chat-box">
-            <div class="message">
-                🤖 <b>Ébénénews :</b> Bienvenue sur le chat !
-            </div>
-        </div>
-
-        <div class="chat-input">
-            <input
-                id="messageInput"
-                type="text"
-                placeholder="Écris ton message..."
-                onkeydown="if(event.key==='Enter') envoyerMessage()"
-            >
-
-            <button onclick="envoyerMessage()">
-                Envoyer
-            </button>
-        </div>
-    </section>
-
-    <!-- ADMIN -->
-    <section class="card">
-        <h2>🔐 Administration</h2>
-
-        <button onclick="ouvrirAdmin()">
-            Connexion admin
-        </button>
-
-        <div id="adminPanel" class="admin-panel">
-
-            <input
-                id="adminUser"
-                placeholder="Identifiant"
-            >
-
-            <input
-                id="adminPassword"
-                type="password"
-                placeholder="Mot de passe"
-            >
-
-            <button onclick="connexionAdmin()">
-                Se connecter
-            </button>
-
-            <div id="adminDashboard" style="display:none;">
-
-                <hr>
-
-                <h3>🛠️ Tableau de bord</h3>
-
-                <button onclick="messageAdmin()">
-                    📢 Envoyer une annonce
-                </button>
-
-                <button onclick="fermerAdmin()">
-                    Déconnexion
-                </button>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- IA -->
-    <section class="card">
-        <h2>🤖 Animateur Ébénénews</h2>
-
-        <p id="iaMessage">
-            Bienvenue sur Ébénénews 72.8 !
-        </p>
-
-        <button onclick="annonceIA()">
-            🎙️ Lancer une annonce
-        </button>
-    </section>
-
-</div>
-
-<footer>
-    Ébénénews 72.8 © 2026
-</footer>
-
-
-<script>
-
-/* =========================
-   STATISTIQUES
-========================= */
-
-let stats = {
-    totalTime: 0,          // en secondes
-    listenCount: 0,        // nombre de chansons écoutées
-    playlistPlays: {},     // nombre de fois que chaque chanson a été jouée
-    sessionStart: Date.now(),
-    currentSessionTime: 0
-};
-
-// Charger les stats depuis localStorage
-function loadStats() {
-    const saved = localStorage.getItem('ebeneStats');
-    if(saved) {
-        stats = JSON.parse(saved);
-        stats.sessionStart = Date.now();
-        stats.currentSessionTime = 0;
-    }
-}
-
-// Sauvegarder les stats dans localStorage
-function saveStats() {
-    localStorage.setItem('ebeneStats', JSON.stringify(stats));
-}
-
-// Mettre à jour l'affichage des statistiques
-function updateStatsDisplay() {
-    // Temps total
-    const minutes = Math.floor(stats.totalTime / 60);
-    const seconds = stats.totalTime % 60;
-    document.getElementById('totalTime').innerText = 
-        minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-
-    // Nombre d'écoutes
-    document.getElementById('listenCount').innerText = stats.listenCount;
-
-    // Durée moyenne
-    let avgDuration = stats.listenCount > 0 
-        ? Math.floor(stats.totalTime / stats.listenCount) 
-        : 0;
-    const avgMin = Math.floor(avgDuration / 60);
-    const avgSec = avgDuration % 60;
-    document.getElementById('avgDuration').innerText = 
-        avgMin > 0 ? `${avgMin}m ${avgSec}s` : `${avgSec}s`;
-
-    // Barre de progression globale
-    const maxSongs = Math.max(1, playlist.length);
-    const progress = (stats.listenCount / (maxSongs * 5)) * 100;
-    document.getElementById('globalProgress').style.width = Math.min(progress, 100) + '%';
-    document.getElementById('progressText').innerText = 
-        `${stats.listenCount} chansons écoutées`;
-
-    // Classement des chansons
-    updatePlaylistStats();
-
-    saveStats();
-}
-
-// Afficher le classement des chansons
-function updatePlaylistStats() {
-    const container = document.getElementById('playlistStats');
-    container.innerHTML = '';
-
-    for(let i = 0; i < playlist.length; i++) {
-        const songName = playlist[i].split('/').pop();
-        const playCount = stats.playlistPlays[i] || 0;
-
-        const div = document.createElement('div');
-        div.className = 'playlist-item';
-        div.innerHTML = `
-            <div class="playlist-name">${(i+1)}. ${songName}</div>
-            <div class="playlist-count">${playCount} fois</div>
-        `;
-        container.appendChild(div);
-    }
-}
-
-// Réinitialiser les stats
-function resetStats() {
-    if(confirm('❌ Êtes-vous sûr de vouloir réinitialiser les statistiques ?')) {
-        stats = {
-            totalTime: 0,
-            listenCount: 0,
-            playlistPlays: {},
-            sessionStart: Date.now(),
-            currentSessionTime: 0
-        };
-        updateStatsDisplay();
-        alert('✅ Statistiques réinitialisées !');
-    }
-}
-
-// Exporter les stats en JSON
-function exportStats() {
-    const dataStr = JSON.stringify(stats, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ebene-stats-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    alert('📥 Données exportées !');
-}
-
-/* =========================
-   RADIO
-========================= */
-
+# 📻 Ébénénews 72.8 - Radio en Ligne
+
+Bienvenue sur **Ébénénews 72.8**, une radio en ligne moderne avec système de statistiques d'écoute intégré !
+
+## 🚀 Fonctionnalités
+
+### 🎵 Lecteur Radio
+- ▶️ Bouton Écouter
+- ⏸️ Pause
+- ⏮️ Précédent
+- ⏭️ Suivant
+- Support de plusieurs chansons (playlist)
+
+### 📊 Statistiques d'Écoute
+- ⏱️ **Temps d'écoute total** - suivi en direct
+- 🎵 **Nombre de chansons écoutées** - compteur automatique
+- ⏰ **Temps actuel du morceau** - synchronisé en temps réel
+- 📈 **Durée moyenne par chanson** - calcul automatique
+- 🏆 **Top des chansons** - classement des chansons les plus écoutées
+- 💾 **Sauvegarde automatique** - les données persistent avec localStorage
+- 📥 **Export JSON** - téléchargez vos statistiques
+
+### 💬 Chat en Ligne
+- Communiquez avec les autres auditeurs
+- Messages en temps réel
+
+### 🔐 Panel Admin
+- Connexion sécurisée
+- Envoi d'annonces
+- **Identifiants de démo :**
+  - Utilisateur : `admin`
+  - Mot de passe : `ebene72`
+
+### 🤖 Animateur IA
+- Annonces aléatoires
+- Accueil personnalisé
+
+---
+
+## 📁 Structure du Projet
+
+```
+ebenenews-radio/
+├── 📄 index.html          # Page principale
+├── 📄 README.md           # Ce fichier
+└── 📁 music/
+    ├── 🎵 musique1.mp3    # Chanson 1
+    └── 🎵 musique2.mp3    # Chanson 2
+```
+
+---
+
+## 🛠️ Installation & Configuration
+
+### Étape 1️⃣ : Cloner le Repository
+```bash
+git clone https://github.com/antoninleturgie-arch/ebenenews-radio.git
+cd ebenenews-radio
+```
+
+### Étape 2️⃣ : Ajouter vos Fichiers MP3
+
+1. Placez vos fichiers MP3 dans le dossier `music/`
+2. Nommez-les : `musique1.mp3`, `musique2.mp3`, etc.
+3. **Exemple :**
+   ```
+   music/
+   ├── musique1.mp3
+   ├── musique2.mp3
+   ├── musique3.mp3
+   └── musique4.mp3
+   ```
+
+### Étape 3️⃣ : Ajouter plus de Chansons
+
+Modifiez la playlist dans `index.html` (ligne ~460) :
+
+```javascript
 const playlist = [
     "music/musique1.mp3",
-    "music/musique2.mp3"
+    "music/musique2.mp3",
+    "music/musique3.mp3",    // ✅ Ajoutez ici
+    "music/musique4.mp3"     // ✅ Et ici
 ];
+```
 
-let index = 0;
+### Étape 4️⃣ : Lancer le Site
 
-const audio = document.getElementById("radio");
-const titre = document.getElementById("titre");
+**Option A : Localement**
+- Double-cliquez sur `index.html`
+- Ou ouvrez-le avec un navigateur
 
-// Compteur de temps en direct
-setInterval(() => {
-    if(!audio.paused) {
-        stats.totalTime++;
-        stats.currentSessionTime++;
-        updateStatsDisplay();
-    }
-    
-    // Mettre à jour le temps actuel
-    if(!isNaN(audio.currentTime)) {
-        const mins = Math.floor(audio.currentTime / 60);
-        const secs = Math.floor(audio.currentTime % 60);
-        document.getElementById('currentTime').innerText = 
-            `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    }
-}, 1000);
+**Option B : Sur un serveur Web**
+- Déployez le dossier sur votre hébergement
+- Accédez via l'URL
 
-function playRadio() {
+---
 
-    audio.src = playlist[index];
+## 📊 Utilisation des Statistiques
 
-    titre.innerText =
-        "🎵 En cours : " +
-        playlist[index].split("/").pop();
+### Métriques Disponibles
+- **Temps d'écoute total** : additionne chaque seconde écoutée
+- **Écoutes aujourd'hui** : nombre de chansons lancées
+- **Temps actuellement** : position dans le morceau en cours
+- **Durée moyenne** : temps d'écoute ÷ nombre de chansons
 
-    audio.play().catch(() => {
+### Actions Possibles
+- 🔄 **Réinitialiser** : efface toutes les statistiques
+- 💾 **Exporter** : télécharge un fichier JSON avec les stats
 
-        alert(
-            "Ajoute tes fichiers MP3 dans le dossier music."
-        );
+### Données Persistantes
+Les statistiques sont automatiquement sauvegardées dans le `localStorage` du navigateur.
+Elles persistent même après fermeture du navigateur !
 
-    });
+---
 
-    // Incrémenter le compteur de la chanson
-    if(!stats.playlistPlays[index]) {
-        stats.playlistPlays[index] = 0;
-    }
-    stats.playlistPlays[index]++;
-    stats.listenCount++;
-    updateStatsDisplay();
+## 🎨 Personnalisation
+
+### Modifier le Design
+Éditez les couleurs dans `index.html` :
+```css
+.logo {
+    color: #d4af37;  /* Couleur dorée */
 }
+```
 
-
-function pauseRadio() {
-
-    audio.pause();
-
+### Changer les Identifiants Admin
+Modifiez dans `index.html` (ligne ~710) :
+```javascript
+if(user === "admin" && password === "ebene72") {
+    // Remplacez "admin" et "ebene72" par vos identifiants
 }
-
-
-function nextMusic() {
-
-    index++;
-
-    if(index >= playlist.length) {
-        index = 0;
-    }
-
-    playRadio();
-
-}
-
-
-function previousMusic() {
-
-    index--;
-
-    if(index < 0) {
-        index = playlist.length - 1;
-    }
-
-    playRadio();
-
-}
-
-
-audio.addEventListener(
-    "ended",
-    nextMusic
-);
-
-
-/* =========================
-   CHAT
-========================= */
-
-function envoyerMessage() {
-
-    const input =
-        document.getElementById("messageInput");
-
-    const message =
-        input.value.trim();
-
-    if(message === "") return;
-
-    const box =
-        document.getElementById("chatBox");
-
-    const element =
-        document.createElement("div");
-
-    element.className = "message";
-
-    element.innerHTML =
-        "👤 <b>Auditeur :</b> " +
-        escapeHTML(message);
-
-    box.appendChild(element);
-
-    input.value = "";
-
-    box.scrollTop = box.scrollHeight;
-
-}
-
-
-function escapeHTML(text) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent = text;
-
-    return div.innerHTML;
-
-}
-
-
-/* =========================
-   ADMIN
-========================= */
-
-function ouvrirAdmin() {
-
-    document.getElementById(
-        "adminPanel"
-    ).style.display = "block";
-
-}
-
-
-function connexionAdmin() {
-
-    const user =
-        document.getElementById(
-            "adminUser"
-        ).value;
-
-    const password =
-        document.getElementById(
-            "adminPassword"
-        ).value;
-
-
-    /*
-       IDENTIFIANTS DE DEMO
-
-       À NE PAS UTILISER POUR
-       UNE VRAIE ADMINISTRATION.
-    */
-
-    if(
-        user === "admin" &&
-        password === "ebene72"
-    ) {
-
-        document.getElementById(
-            "adminDashboard"
-        ).style.display = "block";
-
-        alert(
-            "Connexion réussie !"
-        );
-
-    } else {
-
-        alert(
-            "Identifiant ou mot de passe incorrect."
-        );
-
-    }
-
-}
-
-
-function fermerAdmin() {
-
-    document.getElementById(
-        "adminDashboard"
-    ).style.display = "none";
-
-    document.getElementById(
-        "adminPanel"
-    ).style.display = "none";
-
-}
-
-
-function messageAdmin() {
-
-    const message =
-        prompt(
-            "Annonce à envoyer :"
-        );
-
-    if(!message) return;
-
-    const box =
-        document.getElementById(
-            "chatBox"
-        );
-
-    const element =
-        document.createElement("div");
-
-    element.className = "message";
-
-    element.innerHTML =
-        "🛠️ <b>ADMIN :</b> " +
-        escapeHTML(message);
-
-    box.appendChild(element);
-
-}
-
-
-/* =========================
-   IA
-========================= */
-
+```
+
+### Ajouter des Annonces IA
+Modifiez le tableau `annonces` (ligne ~730) :
+```javascript
 const annonces = [
-
     "Bienvenue sur Ébénénews 72.8 !",
-
-    "Vous écoutez Ébénénews, votre radio en ligne.",
-
-    "Merci d'être avec nous sur Ébénénews 72.8.",
-
-    "La musique continue sur Ébénénews !",
-
-    "Restez avec nous pour la suite du programme."
-
+    "Votre propre annonce ici !",
+    "Une autre annonce"
 ];
+```
 
+---
 
-function annonceIA() {
+## 🔧 Technologies Utilisées
 
-    const message =
-        annonces[
-            Math.floor(
-                Math.random() *
-                annonces.length
-            )
-        ];
+- **HTML5** - Structure
+- **CSS3** - Styling & Design
+- **JavaScript (Vanilla)** - Logique & Statistiques
+- **LocalStorage API** - Sauvegarde des données
+- **HTML5 Audio API** - Lecteur audio
 
-    document.getElementById(
-        "iaMessage"
-    ).innerText = message;
+---
 
+## 📝 Détails Techniques
+
+### Comptage du Temps d'Écoute
+- Incrémente de 1 seconde par seconde (chaque 1000ms)
+- Sauvegardé automatiquement dans localStorage
+- Persiste entre les sessions
+
+### Sauvegarde des Stats
+```javascript
+{
+    "totalTime": 3600,           // secondes
+    "listenCount": 15,           // nombre de chansons
+    "playlistPlays": {
+        "0": 7,                  // musique1.mp3 = 7 fois
+        "1": 8                   // musique2.mp3 = 8 fois
+    }
 }
+```
 
-/* INITIALISATION */
-loadStats();
-updateStatsDisplay();
+---
 
-</script>
+## 🐛 Dépannage
 
-</body>
-</html>
+### Le lecteur ne fonctionne pas
+✅ Vérifiez que les fichiers MP3 sont dans le dossier `music/`
+✅ Vérifiez les noms de fichiers correspondent à la playlist
+
+### Les statistiques ne s'affichent pas
+✅ Ouvrez la console (F12) et cherchez les erreurs
+✅ Vérifiez que JavaScript est activé
+
+### Le site ne s'ouvre pas
+✅ Assurez-vous d'ouvrir `index.html` (pas le dossier)
+✅ Vérifiez l'URL si vous utilisez un serveur
+
+---
+
+## 📜 Licence
+
+Ébénénews 72.8 © 2026 - antoninleturgie-arch
+
+---
+
+## 🤝 Support & Contact
+
+Pour toute question ou problème :
+- 📧 Email : antonin.leturgie@gmail.com
+- 💬 GitHub Issues : https://github.com/antoninleturgie-arch/ebenenews-radio/issues
+
+---
+
+**Bon streaming ! 🎵**
