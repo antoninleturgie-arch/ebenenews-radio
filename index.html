@@ -54,6 +54,10 @@ h2 {
     color: #d4af37;
 }
 
+h3 {
+    color: #fff;
+}
+
 audio {
     width: 100%;
     margin: 15px 0;
@@ -113,10 +117,15 @@ nav button {
 .message {
     padding: 8px;
     border-bottom: 1px solid #222;
+    font-size: 14px;
 }
 
 .admin-panel {
     display: none;
+    background: #0a0a0a;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
 }
 
 .admin-panel input {
@@ -208,6 +217,17 @@ footer {
 .playlist-count {
     font-size: 18px;
     color: #ffd700;
+}
+
+.admin-dashboard {
+    display: none;
+}
+
+.admin-dashboard button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    text-align: left;
 }
 
 </style>
@@ -333,9 +353,10 @@ footer {
         </button>
 
         <div id="adminPanel" class="admin-panel">
-
+            <h3>Connexion</h3>
             <input
                 id="adminUser"
+                type="text"
                 placeholder="Identifiant"
             >
 
@@ -349,20 +370,16 @@ footer {
                 Se connecter
             </button>
 
-            <div id="adminDashboard" style="display:none;">
-
-                <hr>
-
+            <div id="adminDashboard" class="admin-dashboard">
                 <h3>🛠️ Tableau de bord</h3>
 
                 <button onclick="messageAdmin()">
                     📢 Envoyer une annonce
                 </button>
 
-                <button onclick="fermerAdmin()">
+                <button onclick="fermerAdmin()" style="background: #999;">
                     Déconnexion
                 </button>
-
             </div>
         </div>
     </section>
@@ -371,8 +388,8 @@ footer {
     <section class="card">
         <h2>🤖 Animateur Ébénénews</h2>
 
-        <p id="iaMessage">
-            Bienvenue sur Ébénénews 72.8 !
+        <p id="iaMessage" style="background: #0a0a0a; padding: 15px; border-radius: 8px; border-left: 3px solid #d4af37;">
+            🎙️ Bienvenue sur Ébénénews 72.8 !
         </p>
 
         <button onclick="annonceIA()">
@@ -394,40 +411,42 @@ footer {
 ========================= */
 
 let stats = {
-    totalTime: 0,          // en secondes
-    listenCount: 0,        // nombre de chansons écoutées
-    playlistPlays: {},     // nombre de fois que chaque chanson a été jouée
+    totalTime: 0,
+    listenCount: 0,
+    playlistPlays: {},
     sessionStart: Date.now(),
     currentSessionTime: 0
 };
 
-// Charger les stats depuis localStorage
 function loadStats() {
     const saved = localStorage.getItem('ebeneStats');
     if(saved) {
-        stats = JSON.parse(saved);
-        stats.sessionStart = Date.now();
-        stats.currentSessionTime = 0;
+        try {
+            stats = JSON.parse(saved);
+            stats.sessionStart = Date.now();
+            stats.currentSessionTime = 0;
+        } catch(e) {
+            console.error('Erreur chargement stats:', e);
+        }
     }
 }
 
-// Sauvegarder les stats dans localStorage
 function saveStats() {
-    localStorage.setItem('ebeneStats', JSON.stringify(stats));
+    try {
+        localStorage.setItem('ebeneStats', JSON.stringify(stats));
+    } catch(e) {
+        console.error('Erreur sauvegarde stats:', e);
+    }
 }
 
-// Mettre à jour l'affichage des statistiques
 function updateStatsDisplay() {
-    // Temps total
     const minutes = Math.floor(stats.totalTime / 60);
     const seconds = stats.totalTime % 60;
     document.getElementById('totalTime').innerText = 
         minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 
-    // Nombre d'écoutes
     document.getElementById('listenCount').innerText = stats.listenCount;
 
-    // Durée moyenne
     let avgDuration = stats.listenCount > 0 
         ? Math.floor(stats.totalTime / stats.listenCount) 
         : 0;
@@ -436,20 +455,16 @@ function updateStatsDisplay() {
     document.getElementById('avgDuration').innerText = 
         avgMin > 0 ? `${avgMin}m ${avgSec}s` : `${avgSec}s`;
 
-    // Barre de progression globale
     const maxSongs = Math.max(1, playlist.length);
     const progress = (stats.listenCount / (maxSongs * 5)) * 100;
     document.getElementById('globalProgress').style.width = Math.min(progress, 100) + '%';
     document.getElementById('progressText').innerText = 
         `${stats.listenCount} chansons écoutées`;
 
-    // Classement des chansons
     updatePlaylistStats();
-
     saveStats();
 }
 
-// Afficher le classement des chansons
 function updatePlaylistStats() {
     const container = document.getElementById('playlistStats');
     container.innerHTML = '';
@@ -468,7 +483,6 @@ function updatePlaylistStats() {
     }
 }
 
-// Réinitialiser les stats
 function resetStats() {
     if(confirm('❌ Êtes-vous sûr de vouloir réinitialiser les statistiques ?')) {
         stats = {
@@ -483,7 +497,6 @@ function resetStats() {
     }
 }
 
-// Exporter les stats en JSON
 function exportStats() {
     const dataStr = JSON.stringify(stats, null, 2);
     const dataBlob = new Blob([dataStr], {type: 'application/json'});
@@ -509,15 +522,13 @@ let index = 0;
 const audio = document.getElementById("radio");
 const titre = document.getElementById("titre");
 
-// Compteur de temps en direct
 setInterval(() => {
-    if(!audio.paused) {
+    if(!audio.paused && !audio.ended) {
         stats.totalTime++;
         stats.currentSessionTime++;
         updateStatsDisplay();
     }
     
-    // Mettre à jour le temps actuel
     if(!isNaN(audio.currentTime)) {
         const mins = Math.floor(audio.currentTime / 60);
         const secs = Math.floor(audio.currentTime % 60);
@@ -527,22 +538,14 @@ setInterval(() => {
 }, 1000);
 
 function playRadio() {
-
     audio.src = playlist[index];
+    titre.innerText = "🎵 En cours : " + playlist[index].split("/").pop();
 
-    titre.innerText =
-        "🎵 En cours : " +
-        playlist[index].split("/").pop();
-
-    audio.play().catch(() => {
-
-        alert(
-            "Ajoute tes fichiers MP3 dans le dossier music."
-        );
-
+    audio.play().catch(err => {
+        console.error('Erreur lecture:', err);
+        alert("Impossible de jouer le fichier. Vérifie que le MP3 existe.");
     });
 
-    // Incrémenter le compteur de la chanson
     if(!stats.playlistPlays[index]) {
         stats.playlistPlays[index] = 0;
     }
@@ -551,229 +554,130 @@ function playRadio() {
     updateStatsDisplay();
 }
 
-
 function pauseRadio() {
-
     audio.pause();
-
 }
 
-
 function nextMusic() {
-
     index++;
-
     if(index >= playlist.length) {
         index = 0;
     }
-
     playRadio();
-
 }
 
-
 function previousMusic() {
-
     index--;
-
     if(index < 0) {
         index = playlist.length - 1;
     }
-
     playRadio();
-
 }
 
-
-audio.addEventListener(
-    "ended",
-    nextMusic
-);
-
+audio.addEventListener("ended", nextMusic);
 
 /* =========================
    CHAT
 ========================= */
 
 function envoyerMessage() {
-
-    const input =
-        document.getElementById("messageInput");
-
-    const message =
-        input.value.trim();
+    const input = document.getElementById("messageInput");
+    const message = input.value.trim();
 
     if(message === "") return;
 
-    const box =
-        document.getElementById("chatBox");
-
-    const element =
-        document.createElement("div");
-
+    const box = document.getElementById("chatBox");
+    const element = document.createElement("div");
     element.className = "message";
-
-    element.innerHTML =
-        "👤 <b>Auditeur :</b> " +
-        escapeHTML(message);
+    element.innerHTML = "👤 <b>Auditeur :</b> " + escapeHTML(message);
 
     box.appendChild(element);
-
     input.value = "";
-
     box.scrollTop = box.scrollHeight;
-
 }
-
 
 function escapeHTML(text) {
-
-    const div =
-        document.createElement("div");
-
+    const div = document.createElement("div");
     div.textContent = text;
-
     return div.innerHTML;
-
 }
-
 
 /* =========================
    ADMIN
 ========================= */
 
 function ouvrirAdmin() {
-
-    document.getElementById(
-        "adminPanel"
-    ).style.display = "block";
-
+    document.getElementById("adminPanel").style.display = "block";
+    document.getElementById("adminDashboard").style.display = "none";
 }
-
 
 function connexionAdmin() {
+    const user = document.getElementById("adminUser").value.trim();
+    const password = document.getElementById("adminPassword").value;
 
-    const user =
-        document.getElementById(
-            "adminUser"
-        ).value;
+    console.log('Tentative connexion - User:', user, 'Pass:', password);
 
-    const password =
-        document.getElementById(
-            "adminPassword"
-        ).value;
-
-
-    /*
-       IDENTIFIANTS DE DEMO
-
-       À NE PAS UTILISER POUR
-       UNE VRAIE ADMINISTRATION.
-    */
-
-    if(
-        user === "admin" &&
-        password === "ebene72"
-    ) {
-
-        document.getElementById(
-            "adminDashboard"
-        ).style.display = "block";
-
-        alert(
-            "Connexion réussie !"
-        );
-
+    if(user === "admin" && password === "ebene72") {
+        document.getElementById("adminDashboard").style.display = "block";
+        document.getElementById("adminUser").style.display = "none";
+        document.getElementById("adminPassword").style.display = "none";
+        document.querySelectorAll("#adminPanel > button")[0].style.display = "none";
+        alert("✅ Connexion réussie !");
     } else {
-
-        alert(
-            "Identifiant ou mot de passe incorrect."
-        );
-
+        alert("❌ Identifiant ou mot de passe incorrect.\nUtilisez: admin / ebene72");
     }
-
 }
-
 
 function fermerAdmin() {
-
-    document.getElementById(
-        "adminDashboard"
-    ).style.display = "none";
-
-    document.getElementById(
-        "adminPanel"
-    ).style.display = "none";
-
+    document.getElementById("adminDashboard").style.display = "none";
+    document.getElementById("adminPanel").style.display = "none";
+    document.getElementById("adminUser").value = "";
+    document.getElementById("adminPassword").value = "";
+    document.getElementById("adminUser").style.display = "block";
+    document.getElementById("adminPassword").style.display = "block";
+    document.querySelectorAll("#adminPanel > button")[0].style.display = "block";
 }
-
 
 function messageAdmin() {
-
-    const message =
-        prompt(
-            "Annonce à envoyer :"
-        );
-
+    const message = prompt("📢 Annonce à envoyer :");
     if(!message) return;
 
-    const box =
-        document.getElementById(
-            "chatBox"
-        );
-
-    const element =
-        document.createElement("div");
-
+    const box = document.getElementById("chatBox");
+    const element = document.createElement("div");
     element.className = "message";
-
-    element.innerHTML =
-        "🛠️ <b>ADMIN :</b> " +
-        escapeHTML(message);
-
+    element.innerHTML = "🛠️ <b>ADMIN :</b> " + escapeHTML(message);
     box.appendChild(element);
-
+    box.scrollTop = box.scrollHeight;
 }
-
 
 /* =========================
    IA
 ========================= */
 
 const annonces = [
-
-    "Bienvenue sur Ébénénews 72.8 !",
-
-    "Vous écoutez Ébénénews, votre radio en ligne.",
-
-    "Merci d'être avec nous sur Ébénénews 72.8.",
-
-    "La musique continue sur Ébénénews !",
-
-    "Restez avec nous pour la suite du programme."
-
+    "🎙️ Bienvenue sur Ébénénews 72.8 !",
+    "🎵 Vous écoutez Ébénénews, votre radio en ligne.",
+    "📻 Merci d'être avec nous sur Ébénénews 72.8.",
+    "🎶 La musique continue sur Ébénénews !",
+    "📢 Restez avec nous pour la suite du programme.",
+    "🎧 Excellent choix de station !",
+    "⭐ Ébénénews, c'est du bon son !",
+    "🎙️ Bienvenue auditeur !",
+    "🌟 Merci de nous écouter !",
+    "🔥 On va vous régaler avec nos meilleurs hits !"
 ];
 
-
 function annonceIA() {
-
-    const message =
-        annonces[
-            Math.floor(
-                Math.random() *
-                annonces.length
-            )
-        ];
-
-    document.getElementById(
-        "iaMessage"
-    ).innerText = message;
-
+    const message = annonces[Math.floor(Math.random() * annonces.length)];
+    const elem = document.getElementById("iaMessage");
+    elem.innerText = message;
+    console.log('Annonce affichée:', message);
 }
 
 /* INITIALISATION */
 loadStats();
 updateStatsDisplay();
+console.log('Radio Ébénénews chargée !');
 
 </script>
 
