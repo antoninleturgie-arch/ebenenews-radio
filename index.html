@@ -1,73 +1,1004 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#090909">
-<title>Ébénénews 72.8 — Radio & Lecteur multimédia</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>enneBNews 72.8</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#070707;color:#fff;font-family:Arial,sans-serif}
-header{padding:28px 16px;text-align:center;background:#111;border-bottom:2px solid #d4af37}
-.logo{font-size:clamp(36px,8vw,62px);font-weight:900;color:#d4af37}.freq{font-size:18px}
-.wrap{max-width:1050px;margin:auto;padding:20px}.card{background:#141414;border:1px solid #333;border-radius:20px;padding:22px;margin-bottom:18px}
-h2{color:#d4af37}.tabs{display:flex;gap:8px;flex-wrap:wrap}
-button{background:#d4af37;color:#111;border:0;padding:11px 16px;border-radius:10px;font-weight:800;cursor:pointer;margin:4px}
-button.alt{background:#292929;color:#fff;border:1px solid #555}.tabs button.active{outline:2px solid #fff}
-.mode{display:none}.mode.active{display:block}.media{width:100%;max-height:520px;background:#000;border-radius:13px;margin:12px 0}
-.status{color:#aaa}.drop{border:2px dashed #555;border-radius:14px;padding:24px;text-align:center;color:#aaa;margin-top:14px}
-.drop.drag{border-color:#d4af37;color:#d4af37}.playlist{display:grid;gap:8px;margin-top:12px}
-.track{display:flex;align-items:center;gap:8px;background:#090909;border:1px solid #292929;border-radius:10px;padding:10px}
-.track span{flex:1;overflow:hidden;text-overflow:ellipsis}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.stat{background:#090909;border:1px solid #d4af37;border-radius:12px;text-align:center;padding:15px}.val{font-size:28px;color:#d4af37;font-weight:900}
-input{padding:11px;border-radius:9px;border:0;margin:4px;max-width:100%}.notice{background:#0b0b0b;border:1px solid #292929;border-radius:12px;padding:13px;color:#aaa}
-footer{text-align:center;color:#777;padding:30px 15px}@media(max-width:650px){.grid{grid-template-columns:1fr}.card{padding:16px}}
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #070707;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background: linear-gradient(135deg, #111, #1c1c1c);
+    border-bottom: 2px solid #d4af37;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 32px;
+    font-weight: bold;
+    color: #d4af37;
+}
+
+.frequency {
+    font-size: 14px;
+    color: #999;
+}
+
+.header-right {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.user-info {
+    font-size: 12px;
+    color: #d4af37;
+    text-align: right;
+}
+
+.btn-login {
+    background: #d4af37;
+    color: #111;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-login:hover {
+    opacity: .8;
+}
+
+.btn-logout {
+    background: #999;
+    color: #111;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.card {
+    background: #141414;
+    border: 1px solid #333;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 5px 25px rgba(0,0,0,.4);
+}
+
+.card-full {
+    grid-column: 1 / -1;
+}
+
+.card-locked {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+h2 {
+    color: #d4af37;
+    margin-top: 0;
+}
+
+h3 {
+    color: #fff;
+    margin: 10px 0;
+}
+
+audio {
+    width: 100%;
+    margin: 15px 0;
+}
+
+button {
+    background: #d4af37;
+    color: #111;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 5px;
+}
+
+button:hover {
+    opacity: .8;
+}
+
+#titre {
+    text-align: center;
+    color: #d4af37;
+}
+
+.chat-box {
+    height: 200px;
+    background: #090909;
+    border-radius: 10px;
+    padding: 15px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    border: 1px solid #333;
+}
+
+.chat-input {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+}
+
+.message {
+    padding: 8px;
+    border-bottom: 1px solid #222;
+    font-size: 13px;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-box {
+    background: #0a0a0a;
+    border: 1px solid #d4af37;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #d4af37;
+    margin: 10px 0;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #999;
+    text-transform: uppercase;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #222;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 15px 0;
+    border: 1px solid #d4af37;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #d4af37, #ffd700);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.badge-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.badge {
+    background: #0a0a0a;
+    border: 2px solid #333;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    cursor: default;
+}
+
+.badge.locked {
+    opacity: 0.5;
+    border-color: #666;
+}
+
+.badge.unlocked {
+    border-color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.badge-icon {
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+.badge-label {
+    font-size: 11px;
+    color: #999;
+}
+
+.program-item {
+    background: #0a0a0a;
+    border-left: 3px solid #d4af37;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+}
+
+.program-time {
+    color: #d4af37;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.program-name {
+    color: #fff;
+    margin: 5px 0 0 0;
+    font-size: 13px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+    background-color: #141414;
+    margin: 10% auto;
+    padding: 25px;
+    border: 1px solid #d4af37;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 400px;
+    color: white;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+}
+
+.modal-content input, .modal-content textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+    background: #222;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+.modal-content textarea {
+    resize: vertical;
+    height: 100px;
+}
+
+.modal-content button {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.close {
+    color: #d4af37;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    opacity: 0.7;
+}
+
+.music-library {
+    background: #0a0a0a;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+}
+
+.music-item {
+    background: #1a1a1a;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border-left: 3px solid #d4af37;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.music-item-name {
+    color: #d4af37;
+    flex: 1;
+}
+
+.music-item-action {
+    background: #d4af37;
+    color: #111;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.music-item-action:hover {
+    opacity: 0.8;
+}
+
+.file-upload-area {
+    border: 2px dashed #d4af37;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    margin: 15px 0;
+    background: rgba(212, 175, 55, 0.05);
+}
+
+.file-upload-area input[type="file"] {
+    display: none;
+}
+
+.file-upload-label {
+    cursor: pointer;
+    color: #d4af37;
+    font-weight: bold;
+}
+
+.ia-status {
+    font-size: 12px;
+    color: #d4af37;
+    margin-top: 8px;
+}
+
+.direct-mode {
+    background: rgba(212, 175, 55, 0.1);
+    border: 2px solid #d4af37;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+}
+
+.direct-mode p {
+    color: #d4af37;
+    font-weight: bold;
+    margin: 0;
+}
+
+@media (max-width: 900px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+    
+    header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+}
+
 </style>
 </head>
+
 <body>
-<header><div class="logo">📻 ÉBÉNÉNEWS</div><div class="freq">72.8 — RADIO & LECTEUR MULTIMÉDIA</div></header>
-<main class="wrap">
-<section class="card">
-<h2>🎛️ Lecteur multimédia</h2>
-<div class="tabs"><button id="radioTab" class="active">📻 RADIO</button><button id="audioTab" class="alt">🎵 AUDIO</button><button id="videoTab" class="alt">🎬 VIDÉO</button></div>
-<div id="radioMode" class="mode active"><h3 id="radioTitle">Ébénénews 72.8</h3><audio id="radioPlayer" class="media" controls preload="metadata"></audio>
-<button id="radioPlay">▶️ Écouter</button><button id="radioPause" class="alt">⏸️ Pause</button><button id="radioPrev" class="alt">⏮️ Précédent</button><button id="radioNext" class="alt">⏭️ Suivant</button>
-<p id="radioStatus" class="status">Playlist locale prête.</p></div>
-<div id="audioMode" class="mode"><h3>🎵 Lecteur audio</h3><input id="audioFiles" type="file" accept="audio/*" multiple><audio id="audioPlayer" class="media" controls></audio><div id="audioPlaylist" class="playlist"></div></div>
-<div id="videoMode" class="mode"><h3>🎬 Lecteur vidéo</h3><input id="videoFiles" type="file" accept="video/*" multiple><video id="videoPlayer" class="media" controls playsinline></video><div id="videoPlaylist" class="playlist"></div></div>
-<div id="drop" class="drop">📂 Glisse ici un fichier audio ou vidéo pour le lire</div>
-<p class="status">🚗 Compatible voiture via navigateur, Bluetooth, Android Auto ou CarPlay selon l'autoradio.</p>
-</section>
-<section class="card"><h2>📊 Statistiques</h2><div class="grid"><div class="stat">Écoutes<div id="count" class="val">0</div></div><div class="stat">Temps d'écoute<div id="time" class="val">0s</div></div></div></section>
-<section class="card"><h2>📅 Programme</h2><p>🎵 Musique — maintenant</p><p>📰 Flash Ébénénews</p><p>🤖 Animation</p><p>🎙️ Émission en direct</p></section>
-<section class="card"><h2>🔐 Administration</h2><button id="adminOpen">Connexion admin</button><div id="admin" style="display:none;margin-top:12px"><input id="user" placeholder="Identifiant"><input id="pass" type="password" placeholder="Mot de passe"><button id="login">Se connecter</button><p id="adminMsg" class="status"></p></div></section>
-<section class="card"><h2>🤖 Animateur</h2><div id="announce">🎙️ Bienvenue sur Ébénénews 72.8 !</div><button id="speak">🎙️ Lire l'annonce</button></section>
-<section class="card"><h2>ℹ️ Radio 24/7</h2><p class="status">Le site lit une playlist locale. Pour une vraie radio 24/7 identique pour tous les auditeurs, il faut connecter un flux audio Internet permanent/AutoDJ.</p></section>
-</main><footer>Ébénénews 72.8 © 2026 — Radio & lecteur multimédia</footer>
+
+<header>
+    <div>
+        <div class="logo">🎙️ enneBNews</div>
+        <div class="frequency">72.8 — LA RADIO EN LIGNE</div>
+    </div>
+    <div class="header-right">
+        <div class="user-info" id="userInfo" style="display:none;">
+            <div id="userName" style="margin-bottom: 5px;"></div>
+            <button class="btn-logout" onclick="logout()">Déconnexion</button>
+        </div>
+        <button class="btn-login" id="btnLogin" onclick="openLoginModal()">Se connecter</button>
+    </div>
+</header>
+
+<!-- Modal Connexion -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeLoginModal()">&times;</span>
+        <h2>Connexion Admin</h2>
+        <input id="adminUser" type="text" placeholder="Identifiant" />
+        <input id="adminPassword" type="password" placeholder="Mot de passe" />
+        <button onclick="connexionAdmin()">Se connecter</button>
+        <p style="font-size: 12px; color: #999; text-align: center;">Demo: admin / ebene72</p>
+    </div>
+</div>
+
+<!-- Modal Annonce -->
+<div id="annonceModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAnnonceModal()">&times;</span>
+        <h2>📢 Nouvelle annonce</h2>
+        <textarea id="annonceText" placeholder="Écrivez votre annonce..."></textarea>
+        <button onclick="envoyerAnnonce()">Envoyer</button>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- GAUCHE -->
+
+    <!-- DIRECT -->
+    <section class="card">
+        <h2>🔴 DIRECT</h2>
+        
+        <div class="direct-mode">
+            <p>📻 MODE DIRECT EN CONTINU</p>
+        </div>
+
+        <h3 id="titre">Prêt à écouter</h3>
+
+        <audio id="radio" controls preload="metadata"></audio>
+
+        <div style="text-align:center;">
+            <button onclick="playRadio()" id="btnPlay">▶️ Écouter</button>
+            <button onclick="pauseRadio()" id="btnPause" style="display:none;">⏸️ Pause</button>
+        </div>
+    </section>
+
+    <!-- PROGRAMME -->
+    <section class="card">
+        <h2>📅 Programme</h2>
+
+        <div class="program-item">
+            <div class="program-time">Maintenant</div>
+            <div class="program-name">🎵 Musique en direct</div>
+        </div>
+
+        <div class="program-item">
+            <div class="program-time">14:00</div>
+            <div class="program-name">📰 Flash Ébénénews (15min)</div>
+        </div>
+
+        <div class="program-item">
+            <div class="program-time">18:30</div>
+            <div class="program-name">🤖 Animation IA (20min)</div>
+        </div>
+
+        <div class="program-item">
+            <div class="program-time">Samedi 19:00</div>
+            <div class="program-name">🎙️ Émission en direct (1h30)</div>
+        </div>
+    </section>
+
+    <!-- CHAT (Bloqué au départ) -->
+    <section class="card" id="chatSection">
+        <h2>💬 Chat enneBNews</h2>
+
+        <div id="chatBox" class="chat-box">
+            <div class="message">
+                🤖 <b>enneBNews :</b> Bienvenue sur le chat !
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <input id="messageInput" type="text" placeholder="Écris ton message..." 
+                   onkeydown="if(event.key==='Enter') envoyerMessage()" />
+            <button onclick="envoyerMessage()">Envoyer</button>
+        </div>
+    </section>
+
+    <!-- IA (Bloquée au départ) -->
+    <section class="card" id="iaSection">
+        <h2>🤖 Animateur enneBNews</h2>
+
+        <div id="iaMessage" style="background: #0a0a0a; padding: 15px; border-radius: 8px; border-left: 3px solid #d4af37; min-height: 60px; display: flex; align-items: center;">
+            🎙️ Bienvenue sur enneBNews 72.8 !
+        </div>
+
+        <button onclick="lancerAnnounceIA()" style="width: 100%; margin-top: 15px;">
+            🎙️ Lancer une annonce vocale
+        </button>
+
+        <div class="ia-status" id="iaStatus">Prêt à diffuser</div>
+    </section>
+
+    <!-- DROITE -->
+
+    <!-- STATISTIQUES -->
+    <section class="card" style="grid-column: 2; grid-row: 1 / 3;">
+        <h2>📊 Statistiques</h2>
+
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="stat-label">Temps total</div>
+                <div class="stat-value" id="totalTime">0m</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Chansons</div>
+                <div class="stat-value" id="listenCount">0</div>
+            </div>
+        </div>
+
+        <h3>🎖️ Progression</h3>
+        <div class="progress-bar">
+            <div class="progress-fill" id="globalProgress"></div>
+        </div>
+        <p style="font-size: 12px; color: #999;" id="progressText">0%</p>
+
+        <h3>Déblocages</h3>
+        <div class="badge-container">
+            <div class="badge unlocked">
+                <div class="badge-icon">🎵</div>
+                <div class="badge-label">Musique</div>
+            </div>
+            <div class="badge" id="badgeChat">
+                <div class="badge-icon">💬</div>
+                <div class="badge-label">Chat</div>
+            </div>
+            <div class="badge" id="badgeIA">
+                <div class="badge-icon">🤖</div>
+                <div class="badge-label">Animation</div>
+            </div>
+        </div>
+
+        <p style="font-size: 11px; color: #999; margin-top: 15px;">
+            Écoute plus de musique pour débloquer de nouveaux contenus !
+        </p>
+    </section>
+
+    <!-- ADMIN PANEL (Full width, visible si connecté) -->
+    <section class="card card-full" id="adminSection" style="display:none;">
+        <h2>🛠️ Panneau Administrateur</h2>
+
+        <h3>📚 Bibliothèque musicale</h3>
+        
+        <div class="file-upload-area" onclick="document.getElementById('musicUpload').click()">
+            <input type="file" id="musicUpload" accept="audio/*" onchange="uploadMusic(event)" />
+            <label class="file-upload-label">📤 Cliquez ou glissez un fichier MP3</label>
+        </div>
+
+        <div class="music-library" id="musicLibrary">
+            <h4 style="margin-top: 0;">Musiques disponibles :</h4>
+            <div id="musicList"></div>
+        </div>
+
+        <h3>📢 Annonces</h3>
+        <button onclick="openAnnonceModal()" style="width: 100%;">
+            📢 Envoyer une annonce au chat
+        </button>
+    </section>
+
+</div>
+
 <script>
-const radioFiles=['music/musique1.mp3','music/musique2.mp3'];let ri=0;
-const rp=document.getElementById('radioPlayer');
-function loadRadio(auto=false){rp.src=radioFiles[ri];document.getElementById('radioTitle').textContent=radioFiles[ri].split('/').pop();if(auto)rp.play().catch(()=>{})}
-loadRadio();
-radioPlay.onclick=()=>rp.play();radioPause.onclick=()=>rp.pause();
-radioNext.onclick=()=>{ri=(ri+1)%radioFiles.length;loadRadio(true)};
-radioPrev.onclick=()=>{ri=(ri-1+radioFiles.length)%radioFiles.length;loadRadio(true)};
-rp.onended=()=>radioNext.click();
-const tabs=[['radioTab','radioMode'],['audioTab','audioMode'],['videoTab','videoMode']];
-tabs.forEach(([b,m])=>document.getElementById(b).onclick=()=>tabs.forEach(([bb,mm])=>{
-document.getElementById(bb).classList.toggle('active',bb===b);document.getElementById(mm).classList.toggle('active',mm===m)}));
-let audioItems=[],videoItems=[];
-function addFiles(files,type){(type==='audio'?audioItems:videoItems).push(...files);render(type)}
-function render(type){const arr=type==='audio'?audioItems:videoItems,box=document.getElementById(type+'Playlist');box.innerHTML='';
-arr.forEach(f=>{const d=document.createElement('div');d.className='track';const s=document.createElement('span');s.textContent=(type==='audio'?'🎵 ':'🎬 ')+f.name;const b=document.createElement('button');b.textContent='▶️';b.onclick=()=>{const p=document.getElementById(type==='audio'?'audioPlayer':'videoPlayer');p.src=URL.createObjectURL(f);p.play()};d.append(s,b);box.append(d)})}
-audioFiles.onchange=e=>addFiles(e.target.files,'audio');videoFiles.onchange=e=>addFiles(e.target.files,'video');
-const drop=document.getElementById('drop');
-['dragenter','dragover'].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.classList.add('drag')}));
-['dragleave','drop'].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.classList.remove('drag')}));
-drop.addEventListener('drop',e=>{const f=[...e.dataTransfer.files],a=f.filter(x=>x.type.startsWith('audio/')),v=f.filter(x=>x.type.startsWith('video/'));if(a.length){audioTab.click();addFiles(a,'audio')}if(v.length){videoTab.click();addFiles(v,'video')}});
-let stats=JSON.parse(localStorage.getItem('ebeneMediaStats')||'{"count":0,"time":0}');
-function show(){count.textContent=stats.count;time.textContent=Math.floor(stats.time/60)+'m '+Math.floor(stats.time%60)+'s'}rp.onplay=()=>{stats.count++;localStorage.setItem('ebeneMediaStats',JSON.stringify(stats));show()};
-let last=Date.now();setInterval(()=>{let now=Date.now();if(!rp.paused){stats.time+=(now-last)/1000;localStorage.setItem('ebeneMediaStats',JSON.stringify(stats));show()}last=now},1000);show();
-adminOpen.onclick=()=>admin.style.display=admin.style.display==='none'?'block':'none';
-login.onclick=()=>adminMsg.textContent=(user.value==='admin'&&pass.value==='ebene72')?'✅ Connecté en mode démo.':'❌ Identifiants incorrects.';
-speak.onclick=()=>{if('speechSynthesis'in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(announce.textContent);u.lang='fr-FR';speechSynthesis.speak(u)}};
+
+/* =========================
+   GESTION UTILISATEUR
+========================= */
+
+let userConnected = false;
+
+function openLoginModal() {
+    document.getElementById("loginModal").style.display = "block";
+}
+
+function closeLoginModal() {
+    document.getElementById("loginModal").style.display = "none";
+}
+
+function connexionAdmin() {
+    const user = document.getElementById("adminUser").value;
+    const password = document.getElementById("adminPassword").value;
+
+    if(user === "admin" && password === "ebene72") {
+        userConnected = true;
+        
+        document.getElementById("btnLogin").style.display = "none";
+        document.getElementById("userInfo").style.display = "block";
+        document.getElementById("userName").innerText = "👤 Admin connecté";
+        document.getElementById("adminSection").style.display = "block";
+        
+        closeLoginModal();
+        document.getElementById("adminUser").value = "";
+        document.getElementById("adminPassword").value = "";
+        
+        alert("✅ Connexion réussie !");
+    } else {
+        alert("❌ Identifiants incorrects !");
+    }
+}
+
+function logout() {
+    userConnected = false;
+    
+    document.getElementById("btnLogin").style.display = "block";
+    document.getElementById("userInfo").style.display = "none";
+    document.getElementById("adminSection").style.display = "none";
+    
+    alert("✅ Déconnecté");
+}
+
+window.onclick = function(event) {
+    const loginModal = document.getElementById("loginModal");
+    const annonceModal = document.getElementById("annonceModal");
+    
+    if (event.target == loginModal) {
+        closeLoginModal();
+    }
+    if (event.target == annonceModal) {
+        closeAnnonceModal();
+    }
+}
+
+/* =========================
+   STATISTIQUES & PROGRESSION
+========================= */
+
+let stats = {
+    totalTime: 0,
+    listenCount: 0,
+    sessionStart: Date.now()
+};
+
+let unlockedFeatures = {
+    chat: false,
+    ia: false
+};
+
+function loadStats() {
+    const saved = localStorage.getItem('enneBStats');
+    if(saved) {
+        stats = JSON.parse(saved);
+    }
+    updateUnlocks();
+}
+
+function saveStats() {
+    localStorage.setItem('enneBStats', JSON.stringify(stats));
+}
+
+function updateStats() {
+    updateUnlocks();
+    updateStatsDisplay();
+    saveStats();
+}
+
+function updateUnlocks() {
+    // Chat débloqué après 30 min
+    if(stats.totalTime >= 30 && !unlockedFeatures.chat) {
+        unlockedFeatures.chat = true;
+        document.getElementById("chatSection").classList.remove("card-locked");
+        document.getElementById("badgeChat").classList.add("unlocked");
+        document.getElementById("badgeChat").classList.remove("locked");
+        alert("🎉 Vous avez débloqué le Chat !");
+    }
+    
+    // IA débloquée après 60 min
+    if(stats.totalTime >= 60 && !unlockedFeatures.ia) {
+        unlockedFeatures.ia = true;
+        document.getElementById("iaSection").classList.remove("card-locked");
+        document.getElementById("badgeIA").classList.add("unlocked");
+        document.getElementById("badgeIA").classList.remove("locked");
+        alert("🎉 Vous avez débloqué l'Animation IA !");
+    }
+}
+
+function updateStatsDisplay() {
+    const minutes = Math.floor(stats.totalTime / 60);
+    document.getElementById("totalTime").innerText = minutes + "m";
+    document.getElementById("listenCount").innerText = stats.listenCount;
+    
+    const progress = Math.min((stats.totalTime / 120) * 100, 100);
+    document.getElementById("globalProgress").style.width = progress + "%";
+    document.getElementById("progressText").innerText = Math.floor(progress) + "%";
+}
+
+// Compteur de temps
+setInterval(() => {
+    const audio = document.getElementById("radio");
+    if(!audio.paused && !audio.ended) {
+        stats.totalTime++;
+        updateStats();
+    }
+}, 1000);
+
+/* =========================
+   RADIO - MODE DIRECT
+========================= */
+
+const audio = document.getElementById("radio");
+const titre = document.getElementById("titre");
+
+let musicLibrary = [];
+
+function loadMusicLibrary() {
+    const saved = localStorage.getItem('enneBMusicLibrary');
+    if(saved) {
+        musicLibrary = JSON.parse(saved);
+        displayMusicLibrary();
+        playPlaylist();
+    }
+}
+
+function saveMusicLibrary() {
+    localStorage.setItem('enneBMusicLibrary', JSON.stringify(musicLibrary));
+    displayMusicLibrary();
+}
+
+function uploadMusic(event) {
+    if(!userConnected) {
+        alert("❌ Vous devez être connecté en admin !");
+        return;
+    }
+
+    const files = event.target.files;
+    for(let file of files) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            musicLibrary.push({
+                name: file.name,
+                data: e.target.result
+            });
+            saveMusicLibrary();
+            alert("✅ Musique ajoutée : " + file.name);
+        };
+        reader.readAsDataURL(file);
+    }
+    document.getElementById("musicUpload").value = "";
+}
+
+function playPlaylist() {
+    if(musicLibrary.length > 0) {
+        audio.src = musicLibrary[0].data;
+        titre.innerText = "🎵 " + musicLibrary[0].name;
+        audio.onended = playNextInPlaylist;
+    }
+}
+
+function playNextInPlaylist() {
+    if(musicLibrary.length > 0) {
+        const currentIndex = musicLibrary.findIndex(m => m.data === audio.src);
+        const nextIndex = (currentIndex + 1) % musicLibrary.length;
+        audio.src = musicLibrary[nextIndex].data;
+        titre.innerText = "🎵 " + musicLibrary[nextIndex].name;
+        audio.play();
+        stats.listenCount++;
+        updateStats();
+    }
+}
+
+function displayMusicLibrary() {
+    const list = document.getElementById("musicList");
+    list.innerHTML = "";
+    
+    if(musicLibrary.length === 0) {
+        list.innerHTML = '<p style="color: #999;">Aucune musique uploadée</p>';
+        return;
+    }
+    
+    musicLibrary.forEach((music, index) => {
+        const div = document.createElement("div");
+        div.className = "music-item";
+        div.innerHTML = `
+            <span class="music-item-name">${music.name}</span>
+            <button class="music-item-action" onclick="removeMusic(${index})">❌ Supprimer</button>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function removeMusic(index) {
+    if(confirm("Êtes-vous sûr de vouloir supprimer cette musique ?")) {
+        musicLibrary.splice(index, 1);
+        saveMusicLibrary();
+    }
+}
+
+function playRadio() {
+    if(musicLibrary.length === 0) {
+        alert("❌ Aucune musique disponible. Admin, ajoutez des fichiers MP3 !");
+        return;
+    }
+    audio.play();
+    document.getElementById("btnPlay").style.display = "none";
+    document.getElementById("btnPause").style.display = "block";
+}
+
+function pauseRadio() {
+    audio.pause();
+    document.getElementById("btnPlay").style.display = "block";
+    document.getElementById("btnPause").style.display = "none";
+}
+
+/* =========================
+   CHAT ÉPHÉMÈRE
+========================= */
+
+function loadChat() {
+    const today = new Date().toDateString();
+    const saved = localStorage.getItem('enneBChatDate');
+    
+    if(saved !== today) {
+        localStorage.setItem('enneBChatDate', today);
+        localStorage.removeItem('enneBChat');
+    }
+    
+    const chat = localStorage.getItem('enneBChat');
+    if(chat) {
+        document.getElementById("chatBox").innerHTML = JSON.parse(chat);
+    }
+}
+
+function envoyerMessage() {
+    if(!unlockedFeatures.chat) {
+        alert("🔒 Débloquez le chat en écoutant plus de musique !");
+        return;
+    }
+
+    const input = document.getElementById("messageInput");
+    const message = input.value.trim();
+
+    if(message === "") return;
+
+    const box = document.getElementById("chatBox");
+    const element = document.createElement("div");
+    element.className = "message";
+    element.innerHTML = "👤 <b>Auditeur :</b> " + escapeHTML(message);
+
+    box.appendChild(element);
+    input.value = "";
+    box.scrollTop = box.scrollHeight;
+    
+    saveChat();
+}
+
+function saveChat() {
+    const chatHTML = document.getElementById("chatBox").innerHTML;
+    localStorage.setItem('enneBChat', JSON.stringify(chatHTML));
+}
+
+function escapeHTML(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/* =========================
+   IA - SYNTHÈSE VOCALE
+========================= */
+
+const annoncesInfo = [
+    "Bienvenue sur enneBNews 72.8, la meilleure radio en ligne !",
+    "Vous écoutez enneBNews, votre radio musicale préférée.",
+    "Merci de nous écouter sur enneBNews 72.8 FM.",
+    "La musique continue sans interruption sur enneBNews !",
+    "Restez avec nous pour le meilleur du divertissement.",
+    "enneBNews, votre compagnon musical quotidien.",
+    "Flash info : La musique est le meilleur remède !",
+    "Vous êtes en direct sur enneBNews 72.8.",
+    "Merci d'avoir choisi enneBNews pour vos moments musicaux.",
+    "Continuez à nous écouter pour la meilleure sélection musicale !"
+];
+
+const synth = window.speechSynthesis;
+
+function lancerAnnounceIA() {
+    if(!unlockedFeatures.ia) {
+        alert("🔒 Débloquez l'animation en écoutant plus de musique !");
+        return;
+    }
+
+    if(synth.speaking) {
+        synth.cancel();
+    }
+
+    const randomIndex = Math.floor(Math.random() * annoncesInfo.length);
+    const message = annoncesInfo[randomIndex];
+    
+    document.getElementById("iaMessage").innerText = "🎙️ " + message;
+    document.getElementById("iaStatus").innerText = "📻 En direct...";
+    
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = 'fr-FR';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    utterance.onstart = () => {
+        document.getElementById("iaStatus").innerText = "🔊 Annonce vocale en cours...";
+    };
+    
+    utterance.onend = () => {
+        document.getElementById("iaStatus").innerText = "✅ Annonce terminée";
+    };
+    
+    utterance.onerror = (event) => {
+        document.getElementById("iaStatus").innerText = "❌ Erreur de synthèse vocale";
+    };
+    
+    synth.speak(utterance);
+}
+
+function openAnnonceModal() {
+    document.getElementById("annonceModal").style.display = "block";
+}
+
+function closeAnnonceModal() {
+    document.getElementById("annonceModal").style.display = "none";
+}
+
+function envoyerAnnonce() {
+    const text = document.getElementById("annonceText").value;
+    if(text.trim() === "") {
+        alert("Écrivez un message !");
+        return;
+    }
+
+    const box = document.getElementById("chatBox");
+    const element = document.createElement("div");
+    element.className = "message";
+    element.innerHTML = "🛠️ <b>ADMIN :</b> " + escapeHTML(text);
+    box.appendChild(element);
+    
+    saveChat();
+    closeAnnonceModal();
+    document.getElementById("annonceText").value = "";
+    alert("✅ Annonce envoyée !");
+}
+
+/* =========================
+   INITIALISATION
+========================= */
+
+window.addEventListener('load', function() {
+    console.log('=== enneBNews 72.8 Chargée ===');
+    loadStats();
+    loadChat();
+    loadMusicLibrary();
+    updateStatsDisplay();
+    
+    // Bloquer Chat et IA au départ
+    if(!unlockedFeatures.chat) {
+        document.getElementById("chatSection").classList.add("card-locked");
+        document.getElementById("badgeChat").classList.add("locked");
+    }
+    if(!unlockedFeatures.ia) {
+        document.getElementById("iaSection").classList.add("card-locked");
+        document.getElementById("badgeIA").classList.add("locked");
+    }
+});
+
 </script>
-</body></html>
+
+</body>
+</html>
