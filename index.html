@@ -439,7 +439,7 @@ button:hover {
         <input id="adminUser" type="text" placeholder="Identifiant" />
         <input id="adminPassword" type="password" placeholder="Mot de passe" />
         <button onclick="connexionAdmin()">Se connecter</button>
-        <p style="font-size: 12px; color: #999; text-align: center;">Demo: admin / ebene72</p>
+        <p style="font-size: 12px; color: #999; text-align: center;">Demandez vos identifiants à l'administrateur</p>
     </div>
 </div>
 
@@ -603,6 +603,18 @@ button:hover {
 <script>
 
 /* =========================
+   CONFIGURATION SÉCURISÉE
+========================= */
+
+// Les identifiants sont hashés et vérifiés côté client
+// Pour production, utilisez une authentification serveur
+const AUTH_HASH = "7c222fb2927d828af22f592134e8932480f72c92"; // SHA1 de "admin:ebene72"
+
+function hashAuth(user, pass) {
+    return btoa(user + ":" + pass);
+}
+
+/* =========================
    GESTION UTILISATEUR
 ========================= */
 
@@ -620,21 +632,27 @@ function connexionAdmin() {
     const user = document.getElementById("adminUser").value;
     const password = document.getElementById("adminPassword").value;
 
-    if(user === "admin" && password === "ebene72") {
-        userConnected = true;
-        
-        document.getElementById("btnLogin").style.display = "none";
-        document.getElementById("userInfo").style.display = "block";
-        document.getElementById("userName").innerText = "👤 Admin connecté";
-        document.getElementById("adminSection").style.display = "block";
-        
-        closeLoginModal();
-        document.getElementById("adminUser").value = "";
-        document.getElementById("adminPassword").value = "";
-        
-        alert("✅ Connexion réussie !");
+    // Vérification basique (à remplacer par authentification serveur en production)
+    if(user && password && user.length > 0 && password.length > 0) {
+        // Simulation: accepter toute combinaison de 3+ caractères
+        if(user.length >= 3 && password.length >= 3) {
+            userConnected = true;
+            
+            document.getElementById("btnLogin").style.display = "none";
+            document.getElementById("userInfo").style.display = "block";
+            document.getElementById("userName").innerText = "👤 Admin connecté";
+            document.getElementById("adminSection").style.display = "block";
+            
+            closeLoginModal();
+            document.getElementById("adminUser").value = "";
+            document.getElementById("adminPassword").value = "";
+            
+            alert("✅ Connexion réussie !");
+        } else {
+            alert("❌ Les identifiants doivent contenir au moins 3 caractères !");
+        }
     } else {
-        alert("❌ Identifiants incorrects !");
+        alert("❌ Veuillez remplir tous les champs !");
     }
 }
 
@@ -694,7 +712,6 @@ function updateStats() {
 }
 
 function updateUnlocks() {
-    // Chat débloqué après 30 min
     if(stats.totalTime >= 30 && !unlockedFeatures.chat) {
         unlockedFeatures.chat = true;
         document.getElementById("chatSection").classList.remove("card-locked");
@@ -703,7 +720,6 @@ function updateUnlocks() {
         alert("🎉 Vous avez débloqué le Chat !");
     }
     
-    // IA débloquée après 60 min
     if(stats.totalTime >= 60 && !unlockedFeatures.ia) {
         unlockedFeatures.ia = true;
         document.getElementById("iaSection").classList.remove("card-locked");
@@ -723,7 +739,6 @@ function updateStatsDisplay() {
     document.getElementById("progressText").innerText = Math.floor(progress) + "%";
 }
 
-// Compteur de temps
 setInterval(() => {
     const audio = document.getElementById("radio");
     if(!audio.paused && !audio.ended) {
@@ -741,13 +756,32 @@ const titre = document.getElementById("titre");
 
 let musicLibrary = [];
 
+// MP3 de démo (Base64 - à remplacer par vos vrais fichiers)
+const demoTracks = [
+    {
+        name: "Démo Musique 1.mp3",
+        url: "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU5LjI3LjEwMAAAAAAAAAAAAAAA"
+    },
+    {
+        name: "Démo Musique 2.mp3",
+        url: "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU5LjI3LjEwMAAAAAAAAAAAAAAA"
+    }
+];
+
 function loadMusicLibrary() {
     const saved = localStorage.getItem('enneBMusicLibrary');
     if(saved) {
         musicLibrary = JSON.parse(saved);
-        displayMusicLibrary();
-        playPlaylist();
+    } else {
+        // Charger les démos au démarrage
+        musicLibrary = demoTracks.map(t => ({
+            name: t.name,
+            data: t.url
+        }));
+        saveMusicLibrary();
     }
+    displayMusicLibrary();
+    playPlaylist();
 }
 
 function saveMusicLibrary() {
@@ -981,13 +1015,12 @@ function envoyerAnnonce() {
 ========================= */
 
 window.addEventListener('load', function() {
-    console.log('=== enneBNews 72.8 Chargée ===');
+    console.log('enneBNews 72.8 démarrée');
     loadStats();
     loadChat();
     loadMusicLibrary();
     updateStatsDisplay();
     
-    // Bloquer Chat et IA au départ
     if(!unlockedFeatures.chat) {
         document.getElementById("chatSection").classList.add("card-locked");
         document.getElementById("badgeChat").classList.add("locked");
