@@ -110,6 +110,11 @@ h3 {
     margin: 10px 0;
 }
 
+h4 {
+    color: #d4af37;
+    margin: 5px 0;
+}
+
 audio {
     width: 100%;
     margin: 15px 0;
@@ -250,6 +255,13 @@ button:hover {
     padding: 12px;
     margin: 10px 0;
     border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.program-info {
+    flex: 1;
 }
 
 .program-time {
@@ -264,6 +276,28 @@ button:hover {
     font-size: 13px;
 }
 
+.program-status {
+    font-size: 10px;
+    color: #ffd700;
+    margin-top: 3px;
+}
+
+.program-btn {
+    background: #d4af37;
+    color: #111;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.program-btn:hover {
+    opacity: 0.8;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -273,16 +307,17 @@ button:hover {
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.8);
+    overflow-y: auto;
 }
 
 .modal-content {
     background-color: #141414;
-    margin: 10% auto;
+    margin: 5% auto;
     padding: 25px;
     border: 1px solid #d4af37;
     border-radius: 15px;
     width: 90%;
-    max-width: 400px;
+    max-width: 500px;
     color: white;
 }
 
@@ -290,7 +325,7 @@ button:hover {
     margin-top: 0;
 }
 
-.modal-content input, .modal-content textarea {
+.modal-content input, .modal-content textarea, .modal-content select {
     width: 100%;
     padding: 12px;
     margin: 8px 0;
@@ -400,6 +435,11 @@ button:hover {
     margin: 0;
 }
 
+.active-program {
+    background: rgba(255, 215, 0, 0.2) !important;
+    border-left-color: #ffd700 !important;
+}
+
 @media (max-width: 900px) {
     .container {
         grid-template-columns: 1fr;
@@ -453,6 +493,28 @@ button:hover {
     </div>
 </div>
 
+<!-- Modal Programme -->
+<div id="programModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeProgramModal()">&times;</span>
+        <h2>🛠️ Gérer le programme</h2>
+        
+        <h4>Ajouter une activité</h4>
+        <input id="programTime" type="time" placeholder="Horaire (HH:MM)" />
+        <input id="programName" type="text" placeholder="Nom de l'activité" />
+        <select id="programType">
+            <option value="musique">🎵 Musique</option>
+            <option value="flash">📰 Flash</option>
+            <option value="ia">🤖 Animation IA</option>
+            <option value="emission">🎙️ Émission</option>
+        </select>
+        <button onclick="addProgramActivity()">Ajouter</button>
+
+        <h4 style="margin-top: 20px;">Programme actuel</h4>
+        <div id="programList" style="max-height: 300px; overflow-y: auto;"></div>
+    </div>
+</div>
+
 <div class="container">
 
     <!-- GAUCHE -->
@@ -478,26 +540,10 @@ button:hover {
     <!-- PROGRAMME -->
     <section class="card">
         <h2>📅 Programme</h2>
-
-        <div class="program-item">
-            <div class="program-time">Maintenant</div>
-            <div class="program-name">🎵 Musique en direct</div>
-        </div>
-
-        <div class="program-item">
-            <div class="program-time">14:00</div>
-            <div class="program-name">📰 Flash Ébénénews (15min)</div>
-        </div>
-
-        <div class="program-item">
-            <div class="program-time">18:30</div>
-            <div class="program-name">🤖 Animation IA (20min)</div>
-        </div>
-
-        <div class="program-item">
-            <div class="program-time">Samedi 19:00</div>
-            <div class="program-name">🎙️ Émission en direct (1h30)</div>
-        </div>
+        <div id="programContainer"></div>
+        <button onclick="openProgramModal()" style="width: 100%; margin-top: 15px; display: none;" id="btnManageProgram">
+            🛠️ Gérer le programme
+        </button>
     </section>
 
     <!-- CHAT (Bloqué au départ) -->
@@ -596,6 +642,11 @@ button:hover {
         <button onclick="openAnnonceModal()" style="width: 100%;">
             📢 Envoyer une annonce au chat
         </button>
+
+        <h3 style="margin-top: 20px;">📅 Programme</h3>
+        <button onclick="openProgramModal()" style="width: 100%;">
+            🛠️ Gérer le programme
+        </button>
     </section>
 
 </div>
@@ -603,15 +654,136 @@ button:hover {
 <script>
 
 /* =========================
-   CONFIGURATION SÉCURISÉE
+   PROGRAMME - GESTION
 ========================= */
 
-// Les identifiants sont hashés et vérifiés côté client
-// Pour production, utilisez une authentification serveur
-const AUTH_HASH = "7c222fb2927d828af22f592134e8932480f72c92"; // SHA1 de "admin:ebene72"
+let programSchedule = [
+    { time: "00:00", name: "🎵 Musique en direct", type: "musique", duration: "24h" },
+    { time: "14:00", name: "📰 Flash Ébénénews", type: "flash", duration: "15min" },
+    { time: "18:30", name: "🤖 Animation IA", type: "ia", duration: "20min" },
+    { time: "19:00", name: "🎙️ Émission en direct", type: "emission", duration: "1h30" }
+];
 
-function hashAuth(user, pass) {
-    return btoa(user + ":" + pass);
+let currentProgram = null;
+
+function loadProgram() {
+    const saved = localStorage.getItem('enneBProgram');
+    if(saved) {
+        programSchedule = JSON.parse(saved);
+    }
+    displayProgram();
+    checkCurrentProgram();
+}
+
+function saveProgram() {
+    localStorage.setItem('enneBProgram', JSON.stringify(programSchedule));
+    displayProgram();
+}
+
+function displayProgram() {
+    const container = document.getElementById("programContainer");
+    container.innerHTML = "";
+
+    programSchedule.sort((a, b) => a.time.localeCompare(b.time)).forEach((prog, index) => {
+        const div = document.createElement("div");
+        div.className = "program-item";
+        div.id = "prog-" + index;
+        div.innerHTML = `
+            <div class="program-info">
+                <div class="program-time">${prog.time}</div>
+                <div class="program-name">${prog.name}</div>
+                <div class="program-status">${prog.duration}</div>
+            </div>
+            <button class="program-btn" onclick="launchProgram(${index})">▶️</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function checkCurrentProgram() {
+    const now = new Date();
+    const currentTime = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+    
+    programSchedule.forEach((prog, index) => {
+        if(prog.time === currentTime) {
+            launchProgram(index);
+        }
+    });
+}
+
+function launchProgram(index) {
+    const prog = programSchedule[index];
+    
+    if(prog.type === "musique") {
+        playRadio();
+        addChatMessage("📻 <b>Système :</b> Lancement de la musique en direct");
+    } else if(prog.type === "flash") {
+        addChatMessage("📰 <b>Flash :</b> Flash Ébénénews - " + new Date().toLocaleTimeString('fr-FR'));
+    } else if(prog.type === "ia") {
+        lancerAnnounceIA();
+        addChatMessage("🤖 <b>Système :</b> Animation IA lancée");
+    } else if(prog.type === "emission") {
+        addChatMessage("🎙️ <b>Système :</b> Émission en direct lancée");
+    }
+    
+    // Highlight
+    document.querySelectorAll(".program-item").forEach(el => el.classList.remove("active-program"));
+    document.getElementById("prog-" + index).classList.add("active-program");
+}
+
+function addProgramActivity() {
+    const time = document.getElementById("programTime").value;
+    const name = document.getElementById("programName").value;
+    const type = document.getElementById("programType").value;
+
+    if(!time || !name) {
+        alert("Veuillez remplir tous les champs !");
+        return;
+    }
+
+    programSchedule.push({
+        time: time,
+        name: name,
+        type: type,
+        duration: "30min"
+    });
+
+    saveProgram();
+    alert("✅ Activité ajoutée !");
+    document.getElementById("programTime").value = "";
+    document.getElementById("programName").value = "";
+}
+
+function openProgramModal() {
+    document.getElementById("programModal").style.display = "block";
+    displayProgramList();
+}
+
+function closeProgramModal() {
+    document.getElementById("programModal").style.display = "none";
+}
+
+function displayProgramList() {
+    const list = document.getElementById("programList");
+    list.innerHTML = "";
+
+    programSchedule.forEach((prog, index) => {
+        const div = document.createElement("div");
+        div.style.cssText = "background: #1a1a1a; padding: 10px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;";
+        div.innerHTML = `
+            <div>
+                <div style="color: #d4af37; font-weight: bold;">${prog.time} - ${prog.name}</div>
+            </div>
+            <button style="background: #d4af37; color: #111; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;" onclick="removeProgramActivity(${index})">❌</button>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function removeProgramActivity(index) {
+    programSchedule.splice(index, 1);
+    saveProgram();
+    displayProgramList();
 }
 
 /* =========================
@@ -632,25 +804,20 @@ function connexionAdmin() {
     const user = document.getElementById("adminUser").value;
     const password = document.getElementById("adminPassword").value;
 
-    // Vérification basique (à remplacer par authentification serveur en production)
-    if(user && password && user.length > 0 && password.length > 0) {
-        // Simulation: accepter toute combinaison de 3+ caractères
-        if(user.length >= 3 && password.length >= 3) {
-            userConnected = true;
-            
-            document.getElementById("btnLogin").style.display = "none";
-            document.getElementById("userInfo").style.display = "block";
-            document.getElementById("userName").innerText = "👤 Admin connecté";
-            document.getElementById("adminSection").style.display = "block";
-            
-            closeLoginModal();
-            document.getElementById("adminUser").value = "";
-            document.getElementById("adminPassword").value = "";
-            
-            alert("✅ Connexion réussie !");
-        } else {
-            alert("❌ Les identifiants doivent contenir au moins 3 caractères !");
-        }
+    if(user && password && user.length >= 3 && password.length >= 3) {
+        userConnected = true;
+        
+        document.getElementById("btnLogin").style.display = "none";
+        document.getElementById("userInfo").style.display = "block";
+        document.getElementById("userName").innerText = "👤 Admin connecté";
+        document.getElementById("adminSection").style.display = "block";
+        document.getElementById("btnManageProgram").style.display = "block";
+        
+        closeLoginModal();
+        document.getElementById("adminUser").value = "";
+        document.getElementById("adminPassword").value = "";
+        
+        alert("✅ Connexion réussie !");
     } else {
         alert("❌ Veuillez remplir tous les champs !");
     }
@@ -662,6 +829,7 @@ function logout() {
     document.getElementById("btnLogin").style.display = "block";
     document.getElementById("userInfo").style.display = "none";
     document.getElementById("adminSection").style.display = "none";
+    document.getElementById("btnManageProgram").style.display = "none";
     
     alert("✅ Déconnecté");
 }
@@ -669,13 +837,11 @@ function logout() {
 window.onclick = function(event) {
     const loginModal = document.getElementById("loginModal");
     const annonceModal = document.getElementById("annonceModal");
+    const programModal = document.getElementById("programModal");
     
-    if (event.target == loginModal) {
-        closeLoginModal();
-    }
-    if (event.target == annonceModal) {
-        closeAnnonceModal();
-    }
+    if (event.target == loginModal) closeLoginModal();
+    if (event.target == annonceModal) closeAnnonceModal();
+    if (event.target == programModal) closeProgramModal();
 }
 
 /* =========================
@@ -745,6 +911,7 @@ setInterval(() => {
         stats.totalTime++;
         updateStats();
     }
+    checkCurrentProgram();
 }, 1000);
 
 /* =========================
@@ -756,16 +923,9 @@ const titre = document.getElementById("titre");
 
 let musicLibrary = [];
 
-// MP3 de démo (Base64 - à remplacer par vos vrais fichiers)
 const demoTracks = [
-    {
-        name: "Démo Musique 1.mp3",
-        url: "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU5LjI3LjEwMAAAAAAAAAAAAAAA"
-    },
-    {
-        name: "Démo Musique 2.mp3",
-        url: "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU5LjI3LjEwMAAAAAAAAAAAAAAA"
-    }
+    { name: "Démo Musique 1.mp3", url: "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU5LjI3LjEwMAAAAAAAAAAAAAAA" },
+    { name: "Démo Musique 2.mp3", url: "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU5LjI3LjEwMAAAAAAAAAAAAAAA" }
 ];
 
 function loadMusicLibrary() {
@@ -773,11 +933,7 @@ function loadMusicLibrary() {
     if(saved) {
         musicLibrary = JSON.parse(saved);
     } else {
-        // Charger les démos au démarrage
-        musicLibrary = demoTracks.map(t => ({
-            name: t.name,
-            data: t.url
-        }));
+        musicLibrary = demoTracks.map(t => ({ name: t.name, data: t.url }));
         saveMusicLibrary();
     }
     displayMusicLibrary();
@@ -799,10 +955,7 @@ function uploadMusic(event) {
     for(let file of files) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            musicLibrary.push({
-                name: file.name,
-                data: e.target.result
-            });
+            musicLibrary.push({ name: file.name, data: e.target.result });
             saveMusicLibrary();
             alert("✅ Musique ajoutée : " + file.name);
         };
@@ -860,7 +1013,7 @@ function removeMusic(index) {
 
 function playRadio() {
     if(musicLibrary.length === 0) {
-        alert("❌ Aucune musique disponible. Admin, ajoutez des fichiers MP3 !");
+        alert("❌ Aucune musique disponible !");
         return;
     }
     audio.play();
@@ -904,15 +1057,17 @@ function envoyerMessage() {
 
     if(message === "") return;
 
+    addChatMessage("👤 <b>Auditeur :</b> " + escapeHTML(message));
+    input.value = "";
+}
+
+function addChatMessage(html) {
     const box = document.getElementById("chatBox");
     const element = document.createElement("div");
     element.className = "message";
-    element.innerHTML = "👤 <b>Auditeur :</b> " + escapeHTML(message);
-
+    element.innerHTML = html;
     box.appendChild(element);
-    input.value = "";
     box.scrollTop = box.scrollHeight;
-    
     saveChat();
 }
 
@@ -952,9 +1107,7 @@ function lancerAnnounceIA() {
         return;
     }
 
-    if(synth.speaking) {
-        synth.cancel();
-    }
+    if(synth.speaking) synth.cancel();
 
     const randomIndex = Math.floor(Math.random() * annoncesInfo.length);
     const message = annoncesInfo[randomIndex];
@@ -976,7 +1129,7 @@ function lancerAnnounceIA() {
         document.getElementById("iaStatus").innerText = "✅ Annonce terminée";
     };
     
-    utterance.onerror = (event) => {
+    utterance.onerror = () => {
         document.getElementById("iaStatus").innerText = "❌ Erreur de synthèse vocale";
     };
     
@@ -998,13 +1151,7 @@ function envoyerAnnonce() {
         return;
     }
 
-    const box = document.getElementById("chatBox");
-    const element = document.createElement("div");
-    element.className = "message";
-    element.innerHTML = "🛠️ <b>ADMIN :</b> " + escapeHTML(text);
-    box.appendChild(element);
-    
-    saveChat();
+    addChatMessage("🛠️ <b>ADMIN :</b> " + escapeHTML(text));
     closeAnnonceModal();
     document.getElementById("annonceText").value = "";
     alert("✅ Annonce envoyée !");
@@ -1018,6 +1165,7 @@ window.addEventListener('load', function() {
     console.log('enneBNews 72.8 démarrée');
     loadStats();
     loadChat();
+    loadProgram();
     loadMusicLibrary();
     updateStatsDisplay();
     
