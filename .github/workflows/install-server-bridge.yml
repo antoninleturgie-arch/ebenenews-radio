@@ -1,0 +1,22 @@
+name: Install Val Town bridge
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bridge
+        run: |
+          if ! grep -q 'server-bridge.js' index.html; then
+            sed -i 's#</body>#<script src="./server-bridge.js"></script></body>#' index.html
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "Connect GitHub Pages to Val Town server"
+            git push
+          fi
