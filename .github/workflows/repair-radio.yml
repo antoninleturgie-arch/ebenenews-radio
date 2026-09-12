@@ -1,0 +1,97 @@
+name: Repair Ébénénews radio
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-radio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Repair radio player
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          start = s.find('function playRadio() {')
+          end = s.find('/* =========================\n   PROGRAMME', start)
+          if start == -1 or end == -1:
+              raise SystemExit('Radio section not found')
+          replacement = r'''function playRadio() {
+              if(!window.musicLibrary || window.musicLibrary.length === 0) {
+                  alert("❌ Aucune musique disponible !");
+                  return;
+              }
+
+              const audio = document.getElementById("radio");
+              const track = window.musicLibrary[window.currentTrackIndex || 0];
+              audio.src = track.url;
+              audio.load();
+              document.getElementById("titre").innerText = "🎵 " + track.name;
+
+              audio.play().then(() => {
+                  document.getElementById("btnPlay").style.display = "none";
+                  document.getElementById("btnPause").style.display = "inline-block";
+              }).catch(() => {
+                  alert("▶️ Clique encore sur Écouter pour démarrer la musique.");
+              });
+          }
+
+          function pauseRadio() {
+              const audio = document.getElementById("radio");
+              audio.pause();
+              document.getElementById("btnPlay").style.display = "inline-block";
+              document.getElementById("btnPause").style.display = "none";
+          }
+
+          window.currentTrackIndex = 0;
+
+          function nextRadio() {
+              if(!window.musicLibrary || window.musicLibrary.length === 0) return;
+              window.currentTrackIndex = (window.currentTrackIndex + 1) % window.musicLibrary.length;
+              playRadio();
+          }
+
+          function previousRadio() {
+              if(!window.musicLibrary || window.musicLibrary.length === 0) return;
+              window.currentTrackIndex = (window.currentTrackIndex - 1 + window.musicLibrary.length) % window.musicLibrary.length;
+              playRadio();
+          }
+
+          document.addEventListener('DOMContentLoaded', function() {
+              const audio = document.getElementById('radio');
+              if(audio) {
+                  audio.addEventListener('ended', nextRadio);
+                  audio.addEventListener('error', function() {
+                      document.getElementById('titre').innerText = '⚠️ Impossible de lire cette piste';
+                      document.getElementById('btnPlay').style.display = 'inline-block';
+                      document.getElementById('btnPause').style.display = 'none';
+                  });
+              }
+          });
+
+          '''
+          if 'window.currentTrackIndex = 0;' in s[start:end]:
+              print('Radio already repaired')
+              raise SystemExit(0)
+          p.write_text(s[:start] + replacement + s[end:], encoding='utf-8')
+          PY
+
+      - name: Commit repair
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix radio player"
+          git push
