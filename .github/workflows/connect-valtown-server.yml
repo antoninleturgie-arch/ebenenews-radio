@@ -1,0 +1,91 @@
+name: Connect Val Town server
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  connect-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Connect frontend to Val Town backend
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- EBENE-NEWS-VAL-TOWN-SERVER -->'
+          if marker in s:
+              print('Server bridge already installed')
+              raise SystemExit(0)
+          bridge=r'''<!-- EBENE-NEWS-VAL-TOWN-SERVER -->
+<script>
+(function(){
+  const API='https://chezlanoisette--7ba67b72a3f411f186a31607ee4eb77e.web.val.run';
+  const TOKEN_KEY='enneBServerAdminToken';
+  let hydrating=false;
+  const keys={music:'enneBMusicLibrary',program:'enneBProgram',announcements:'enneBAnnouncements'};
+  function token(){return localStorage.getItem(TOKEN_KEY)||''}
+  function admin(){try{return typeof isAdmin==='function' && isAdmin()}catch(e){return false}}
+  async function saveServer(key,value){
+    const t=token();
+    if(!t || !admin() || hydrating) return;
+    try{
+      const r=await fetch(API+'/api/admin/content',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({key,value})});
+      if(!r.ok) console.warn('Serveur:',await r.text());
+    }catch(e){console.warn('Serveur indisponible',e)}
+  }
+  const oldSet=Storage.prototype.setItem;
+  Storage.prototype.setItem=function(k,v){
+    oldSet.call(this,k,v);
+    if(this===localStorage && Object.values(keys).includes(k)){
+      try{saveServer(Object.keys(keys).find(x=>keys[x]===k),JSON.parse(v))}catch(e){}
+    }
+  };
+  async function hydrate(){
+    try{
+      const r=await fetch(API+'/api/content',{cache:'no-store'}); if(!r.ok)return;
+      const d=await r.json(); hydrating=true;
+      for(const [key,store] of Object.entries(keys)){
+        if(Array.isArray(d[key]) && d[key].length) oldSet.call(localStorage,store,JSON.stringify(d[key]));
+        else if(Array.isArray(d[key]) && !localStorage.getItem(store)) oldSet.call(localStorage,store,'[]');
+      }
+      hydrating=false;
+      if(typeof displayMusic==='function') displayMusic();
+      if(typeof displayProgram==='function') displayProgram();
+      if(typeof displayAnnouncements==='function') displayAnnouncements();
+      if(typeof displayAdminProgram==='function' && admin()) displayAdminProgram();
+    }catch(e){hydrating=false;console.warn('Impossible de charger le serveur',e)}
+  }
+  function addServerControls(){
+    if(!admin() || document.getElementById('serverAdminBox')) return;
+    const box=document.createElement('div'); box.id='serverAdminBox';
+    box.style.cssText='background:#0b0b0b;border:1px solid #d4af37;border-radius:12px;padding:14px;margin:12px 0;color:#fff';
+    box.innerHTML='<b style="color:#d4af37">🖥️ Serveur réel</b><div style="font-size:12px;color:#aaa;margin:6px 0">Les contenus enregistrés ici sont partagés avec tous les visiteurs.</div><button id="serverLoginBtn">🔐 Connexion serveur</button><button id="serverLogoutBtn" style="background:#333;color:#fff">Déconnecter</button><span id="serverState" style="font-size:12px;margin-left:8px"></span>';
+    const target=document.querySelector('#adminPanel')||document.querySelector('[id*=admin]')||document.body.firstElementChild;
+    if(target) target.prepend(box); else document.body.prepend(box);
+    box.querySelector('#serverLoginBtn').onclick=()=>{
+      window.open(API+'/admin','_blank');
+      setTimeout(()=>{const t=prompt('Colle ici le jeton serveur obtenu dans la page Admin Val Town :'); if(t){localStorage.setItem(TOKEN_KEY,t.trim()); updateState();}},300);
+    };
+    box.querySelector('#serverLogoutBtn').onclick=()=>{localStorage.removeItem(TOKEN_KEY);updateState()};
+    function updateState(){box.querySelector('#serverState').textContent=token()?'● Connecté':'● Non connecté';box.querySelector('#serverState').style.color=token()?'#6f6':'#999'}
+    updateState();
+  }
+  window.addEventListener('load',()=>{hydrate();setTimeout(addServerControls,500);setInterval(addServerControls,1500)})
+})();
+</script>
+'''
+          s=s.replace('</body>',bridge+'\n</body>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit server connection
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Connect site to Val Town content server"
+          git push
