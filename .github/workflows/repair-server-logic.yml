@@ -1,0 +1,37 @@
+name: Repair server admin logic
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair index
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="""function isAdmin() {\n    if(!currentUser) return false;\n    // GitHub Pages = application statique : le rôle est explicite, jamais basé sur le premier compte.\n    return currentUser.role === 'admin';\n}"""
+          new="""function isAdmin() {\n    if(!currentUser) return false;\n    // Admin local explicite ou session admin Val Town.\n    return currentUser.role === 'admin' || !!localStorage.getItem('enneBServerAdminToken');\n}"""
+          s=s.replace(old,new)
+          dup="""    const announcements=getAnnouncements();\n    announcements.unshift({text:text.trim(),date:new Date().toLocaleString('fr-FR')});\n    saveAnnouncements(announcements);\n    displayAnnouncements();\n\n    const announcements=getAnnouncements();\n    announcements.unshift({text:text.trim(),date:new Date().toLocaleString('fr-FR')});\n    saveAnnouncements(announcements);\n    displayAnnouncements();"""
+          one="""    const announcements=getAnnouncements();\n    announcements.unshift({text:text.trim(),date:new Date().toLocaleString('fr-FR')});\n    saveAnnouncements(announcements);\n    displayAnnouncements();"""
+          s=s.replace(dup,one)
+          old_remove="""function removeMusic(index) {\n    window.musicLibrary.splice(index, 1);"""
+          new_remove="""function removeMusic(index) {\n    if(!isAdmin()) { alert('❌ Admin uniquement !'); return; }\n    window.musicLibrary.splice(index, 1);"""
+          s=s.replace(old_remove,new_remove)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Repair Val Town admin content controls"
+          git push
