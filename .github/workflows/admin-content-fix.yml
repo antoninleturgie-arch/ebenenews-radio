@@ -1,0 +1,79 @@
+name: Fix admin content panel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch admin panel and permissions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Never make the first registered account admin.
+          old="""function isAdmin() {\n    if(!currentUser) return false;\n    // Pour la démo, le premier utilisateur créé est admin\n    const users = getUsers();\n    return users.length > 0 && users[0].id === currentUser.id;\n}"""
+          new="""function isAdmin() {\n    if(!currentUser) return false;\n    // GitHub Pages = application statique : le rôle est explicite, jamais basé sur le premier compte.\n    return currentUser.role === 'admin';\n}"""
+          s=s.replace(old,new)
+
+          # New accounts are always normal users.
+          s=s.replace("""        isPremium: false,\n        storageUsed: 0,""","""        isPremium: false,\n        role: 'user',\n        storageUsed: 0,""")
+
+          # Add role migration for old accounts and an explicit local admin setup button.
+          marker="""function loginUser() {"""
+          inject="""function migrateAccountRoles() {\n    const users = getUsers();\n    let changed = false;\n    users.forEach(u => {\n        if(!u.role) { u.role = 'user'; changed = true; }\n    });\n    if(changed) saveUsers(users);\n}\n\nfunction promoteCurrentAccountToAdmin() {\n    const code = prompt('Code de configuration administrateur :');\n    if(code !== 'EBENE-ADMIN-72.8') { alert('❌ Code incorrect.'); return; }\n    if(!currentUser) { alert('❌ Connectez-vous d’abord.'); return; }\n    const users = getUsers();\n    const u = users.find(x => x.id === currentUser.id);\n    if(!u) return;\n    u.role = 'admin';\n    currentUser.role = 'admin';\n    saveUsers(users);\n    saveUser();\n    displayUserInfo();\n    displayMusicAdmin();\n    displayAdminProgram();\n    alert('✅ Compte configuré comme administrateur.');\n}\n\n"""
+          s=s.replace(marker,inject+marker)
+
+          # Prevent free premium activation.
+          start=s.find('function activatePremium() {')
+          end=s.find('\n}\n\n/* =========================\n   SYSTÈME DE FICHIERS', start)
+          if start!=-1 and end!=-1:
+              replacement="""function activatePremium() {\n    alert('⭐ Le Premium ne peut pas être activé gratuitement.\n\nUn administrateur doit vous accorder le Premium ou un vrai paiement devra être connecté.');\n}\n"""
+              s=s[:start]+replacement+s[end+3:]
+
+          # Admin-only announcement and program deletion.
+          s=s.replace("""function removeProgram(index) {\n    programSchedule.splice(index, 1);""","""function removeProgram(index) {\n    if(!isAdmin()) { alert('❌ Admin uniquement !'); return; }\n    programSchedule.splice(index, 1);""")
+          s=s.replace("""function envoyerAnnonce() {\n    const text""","""function envoyerAnnonce() {\n    if(!isAdmin()) { alert('❌ Admin uniquement !'); return; }\n    const text""")
+
+          # Add editable content controls to admin announcements.
+          old_admin="""<textarea id=\"annonceText\" placeholder=\"Écrivez votre annonce...\" style=\"width: 100%; height: 100px; padding: 12px; border-radius: 8px; border: none; background: #222; color: white;\"></textarea>\n            <button onclick=\"envoyerAnnonce()\" style=\"width: 100%; margin-top: 10px;\">\n                📢 Envoyer l'annonce\n            </button>"""
+          new_admin="""<textarea id=\"annonceText\" placeholder=\"Écrivez votre annonce...\" style=\"width: 100%; height: 100px; padding: 12px; border-radius: 8px; border: none; background: #222; color: white;\"></textarea>\n            <button onclick=\"envoyerAnnonce()\" style=\"width: 100%; margin-top: 10px;\">📢 Publier l'annonce</button>\n            <div id=\"adminAnnouncementsList\" style=\"margin-top:15px;\"></div>"""
+          s=s.replace(old_admin,new_admin)
+
+          # Add persistent announcement CRUD in localStorage.
+          marker2="""function lancerAnnounceIA() {"""
+          crud="""function getAnnouncements() {\n    const saved = localStorage.getItem('enneBAnnouncements');\n    return saved ? JSON.parse(saved) : [];\n}\n\nfunction saveAnnouncements(items) { localStorage.setItem('enneBAnnouncements', JSON.stringify(items)); }\n\nfunction displayAnnouncements() {\n    const list = document.getElementById('adminAnnouncementsList');\n    if(!list || !isAdmin()) return;\n    const items = getAnnouncements();\n    list.innerHTML = items.length ? '' : '<p style=\"color:#999\">Aucune annonce publiée.</p>';\n    items.forEach((item,i) => {\n        const div=document.createElement('div');\n        div.className='file-item';\n        div.innerHTML=`<div style=\"flex:1\"><b>${item.text.replace(/</g,'&lt;')}</b><div class=\"file-size\">${item.date}</div></div><button class=\"file-action\" onclick=\"editAnnouncement(${i})\">✏️</button><button class=\"file-action\" style=\"background:#d32f2f\" onclick=\"deleteAnnouncement(${i})\">❌</button>`;\n        list.appendChild(div);\n    });\n}\n\nfunction editAnnouncement(index) {\n    if(!isAdmin()) return;\n    const items=getAnnouncements(); const text=prompt('Modifier l’annonce :',items[index]?.text||'');\n    if(text===null || !text.trim()) return;\n    items[index].text=text.trim(); saveAnnouncements(items); displayAnnouncements();\n}\n\nfunction deleteAnnouncement(index) {\n    if(!isAdmin() || !confirm('Supprimer cette annonce ?')) return;\n    const items=getAnnouncements(); items.splice(index,1); saveAnnouncements(items); displayAnnouncements();\n}\n\n"""
+          s=s.replace(marker2,crud+marker2)
+
+          # Make envoyerAnnonce actually publish/save content.
+          old_send="""    const box = document.getElementById(\"chatBox\");"""
+          new_send="""    const announcements=getAnnouncements();\n    announcements.unshift({text:text.trim(),date:new Date().toLocaleString('fr-FR')});\n    saveAnnouncements(announcements);\n    displayAnnouncements();\n\n    const box = document.getElementById(\"chatBox\");"""
+          # only first occurrence after envoyerAnnonce is difficult; replace last occurrence globally once near function using split
+          pos=s.find('function envoyerAnnonce()')
+          if pos!=-1:
+              tail=s[pos:]
+              tail=tail.replace(old_send,new_send,1)
+              s=s[:pos]+tail
+
+          # Load admin content after login and startup.
+          s=s.replace("""    if(isAdmin()) {\n        displayMusicAdmin();\n    }""","""    if(isAdmin()) {\n        displayMusicAdmin();\n        displayAnnouncements();\n        displayAdminProgram();\n    }""")
+          s=s.replace("""    loadProgram();\n});""","""    loadProgram();\n    migrateAccountRoles();\n    if(isAdmin()) { displayAnnouncements(); displayAdminProgram(); }\n});""")
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Fix admin content management and premium access"
+          git push
