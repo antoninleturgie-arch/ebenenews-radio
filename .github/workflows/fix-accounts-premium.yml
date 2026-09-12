@@ -1,0 +1,196 @@
+name: Fix accounts premium admin
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch account and premium logic
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          start=s.index('/* =========================\n   SYSTÈME DE COMPTES')
+          end=s.index('/* =========================\n   SYSTÈME DE FICHIERS', start)
+          new=r'''/* =========================
+   SYSTÈME DE COMPTES
+========================= */
+
+let currentUser = null;
+
+function loadUser() {
+    const saved = localStorage.getItem('enneBCurrentUser');
+    if(saved) {
+        try { currentUser = JSON.parse(saved); } catch(e) { currentUser = null; }
+        if(currentUser) {
+            displayUserInfo();
+            updatePremiumUI();
+            if(isAdmin()) displayMusicAdmin();
+        }
+    }
+}
+
+function saveUser() {
+    if(!currentUser) return;
+    const users=getUsers();
+    const i=users.findIndex(u=>u.id===currentUser.id);
+    if(i>=0) users[i]=currentUser;
+    saveUsers(users);
+    localStorage.setItem('enneBCurrentUser', JSON.stringify(currentUser));
+}
+
+function getUsers() {
+    const saved=localStorage.getItem('enneBUsers');
+    try { return saved ? JSON.parse(saved) : []; } catch(e) { return []; }
+}
+function saveUsers(users) { localStorage.setItem('enneBUsers',JSON.stringify(users)); }
+
+function openAuthModal() { document.getElementById('authModal').style.display='block'; }
+function closeAuthModal() { document.getElementById('authModal').style.display='none'; }
+
+function switchTab(tab) {
+    document.querySelectorAll('#authModal .tab-content').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('#authModal .tab-btn').forEach(el=>el.classList.remove('active'));
+    document.getElementById(tab+'Tab').classList.add('active');
+    if(event && event.target) event.target.classList.add('active');
+}
+function switchAdminTab(tab) {
+    document.querySelectorAll('#adminSection .tab-content').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('#adminSection .tab-btn').forEach(el=>el.classList.remove('active'));
+    const panel=document.getElementById(tab+'Tab'); if(panel) panel.classList.add('active');
+    if(event && event.target) event.target.classList.add('active');
+}
+
+function registerUser() {
+    const email=document.getElementById('registerEmail').value.trim().toLowerCase();
+    const username=document.getElementById('registerUsername').value.trim();
+    const password=document.getElementById('registerPassword').value;
+    const password2=document.getElementById('registerPassword2').value;
+    if(!email||!username||!password||!password2) return alert('❌ Remplissez tous les champs.');
+    if(password.length<6) return alert('❌ Mot de passe : 6 caractères minimum.');
+    if(password!==password2) return alert('❌ Les mots de passe ne correspondent pas.');
+    const users=getUsers();
+    if(users.some(u=>u.email===email)) return alert('❌ Cet email est déjà utilisé.');
+    const newUser={id:Date.now(),email,username,password:btoa(unescape(encodeURIComponent(password))),role:'user',isPremium:false,storageUsed:0,files:[],playlists:[],createdAt:new Date().toISOString()};
+    users.push(newUser); saveUsers(users);
+    currentUser=newUser; localStorage.setItem('enneBCurrentUser',JSON.stringify(currentUser));
+    closeAuthModal(); displayUserInfo(); updatePremiumUI();
+    alert('✅ Compte gratuit créé.');
+}
+
+function loginUser() {
+    const email=document.getElementById('loginEmail').value.trim().toLowerCase();
+    const password=document.getElementById('loginPassword').value;
+    if(!email||!password) return alert('❌ Remplissez tous les champs.');
+    const encoded=btoa(unescape(encodeURIComponent(password)));
+    const user=getUsers().find(u=>u.email===email && u.password===encoded);
+    if(!user) return alert('❌ Email ou mot de passe incorrect.');
+    currentUser=user; localStorage.setItem('enneBCurrentUser',JSON.stringify(user));
+    closeAuthModal(); displayUserInfo(); updatePremiumUI();
+    if(isAdmin()) displayMusicAdmin();
+    document.getElementById('loginEmail').value=''; document.getElementById('loginPassword').value='';
+    alert(isAdmin()?'✅ Connecté en administrateur.':'✅ Connecté.');
+}
+
+function logout() {
+    currentUser=null; localStorage.removeItem('enneBCurrentUser');
+    document.getElementById('btnLogin').style.display='block';
+    document.getElementById('userInfo').style.display='none';
+    document.getElementById('adminSection').style.display='none';
+    document.getElementById('btnManageProgram').style.display='none';
+    updatePremiumUI();
+}
+
+function isAdmin() { return !!(currentUser && currentUser.role==='admin'); }
+
+function displayUserInfo() {
+    if(!currentUser) return;
+    document.getElementById('btnLogin').style.display='none';
+    document.getElementById('userInfo').style.display='block';
+    document.getElementById('userName').innerText='👤 '+currentUser.username+(isAdmin()?' • ADMIN':'');
+    document.getElementById('userPremium').innerHTML=currentUser.isPremium
+      ? '<div class="badge-premium">⭐ PREMIUM</div>'
+      : '<button onclick="openPremiumModal()" style="background:#333;color:#fff;padding:6px 10px;margin:5px 0;border-radius:6px;font-size:12px;">Voir Premium</button>';
+    if(isAdmin()) {
+      document.getElementById('adminSection').style.display='block';
+      document.getElementById('btnManageProgram').style.display='block';
+    } else {
+      document.getElementById('adminSection').style.display='none';
+      document.getElementById('btnManageProgram').style.display='none';
+    }
+}
+
+function updatePremiumUI() {
+    const storage=document.getElementById('storageSection'), playlists=document.getElementById('playlistSection');
+    if(currentUser && currentUser.isPremium) {
+      storage.style.display='block'; playlists.style.display='block'; updateStorageDisplay(); loadUserFiles(); loadUserPlaylists();
+    } else {
+      storage.style.display='none'; playlists.style.display='none';
+    }
+}
+
+function openPremiumModal() { document.getElementById('premiumModal').style.display='block'; }
+function closePremiumModal() { document.getElementById('premiumModal').style.display='none'; }
+function activatePremium() {
+    alert('ℹ️ Le Premium ne peut plus être activé gratuitement. Le paiement devra être relié à un vrai service de paiement avant activation.');
+}
+
+/* =========================
+   SYSTÈME DE FICHIERS'''
+          s=s[:start]+new+s[end+len('/* =========================\n   SYSTÈME DE FICHIERS'):]
+          # Remove accidental duplicated header if present
+          s=s.replace('/* =========================\n   SYSTÈME DE FICHIERS\n   SYSTÈME DE FICHIERS','/* =========================\n   SYSTÈME DE FICHIERS')
+          # Update premium modal button so it cannot claim a free activation.
+          s=s.replace('PASSER AU PREMIUM MAINTENANT','CHOISIR LE PREMIUM')
+          s=s.replace('💡 Actuellement en mode DÉMO. La facturation ne sera activée que si vous confirmez.','💡 Le Premium est réservé aux comptes autorisés. Aucun Premium gratuit n’est accordé par ce bouton.')
+          # Add admin management block before ADMIN & RADIO.
+          marker='/* =========================\n   ADMIN & RADIO\n========================= */'
+          admin=r'''/* =========================
+   GESTION DES COMPTES ADMIN
+========================= */
+function grantPremiumByEmail() {
+    if(!isAdmin()) return alert('❌ Administrateur uniquement.');
+    const email=prompt('Email du compte à passer Premium :');
+    if(!email) return;
+    const users=getUsers(); const u=users.find(x=>x.email===email.trim().toLowerCase());
+    if(!u) return alert('❌ Compte introuvable.');
+    u.isPremium=true; saveUsers(users);
+    if(currentUser && currentUser.id===u.id) currentUser=u;
+    alert('✅ Premium accordé à '+u.username+'.');
+    if(currentUser) { saveUser(); displayUserInfo(); updatePremiumUI(); }
+}
+function revokePremiumByEmail() {
+    if(!isAdmin()) return alert('❌ Administrateur uniquement.');
+    const email=prompt('Email du compte à retirer du Premium :');
+    if(!email) return;
+    const users=getUsers(); const u=users.find(x=>x.email===email.trim().toLowerCase());
+    if(!u) return alert('❌ Compte introuvable.');
+    u.isPremium=false; saveUsers(users);
+    if(currentUser && currentUser.id===u.id) currentUser=u;
+    alert('✅ Premium retiré.');
+    if(currentUser) { saveUser(); displayUserInfo(); updatePremiumUI(); }
+}
+
+'''
+          s=s.replace(marker,admin+marker)
+          # Add admin buttons to admin panel.
+          needle='<h2>🛠️ Panneau Administrateur</h2>'
+          repl=needle+'''\n        <div style="background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:15px;">\n            <b>👥 Gestion des comptes</b><br>\n            <button onclick="grantPremiumByEmail()">⭐ Donner Premium</button>\n            <button onclick="revokePremiumByEmail()" style="background:#555;color:#fff;">Retirer Premium</button>\n        </div>'''
+          s=s.replace(needle,repl,1)
+          # Never allow arbitrary first account to become admin.
+          s=s.replace('// Pour la démo, le premier utilisateur créé est admin','// Les droits admin sont attribués explicitement via le champ role.')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Fix free accounts premium and admin roles"
+          git push
