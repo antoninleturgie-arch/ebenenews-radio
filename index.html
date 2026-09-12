@@ -1074,19 +1074,53 @@ function playRadio() {
         alert("❌ Aucune musique disponible !");
         return;
     }
+
     const audio = document.getElementById("radio");
-    audio.src = window.musicLibrary[0].url;
-    document.getElementById("titre").innerText = "🎵 " + window.musicLibrary[0].name;
-    audio.play();
-    document.getElementById("btnPlay").style.display = "none";
-    document.getElementById("btnPause").style.display = "block";
+    const track = window.musicLibrary[window.currentTrackIndex || 0];
+    audio.src = track.url;
+    audio.load();
+    document.getElementById("titre").innerText = "🎵 " + track.name;
+
+    audio.play().then(() => {
+        document.getElementById("btnPlay").style.display = "none";
+        document.getElementById("btnPause").style.display = "inline-block";
+    }).catch(() => {
+        alert("▶️ Clique encore sur Écouter pour démarrer la musique.");
+    });
 }
 
 function pauseRadio() {
-    document.getElementById("radio").pause();
-    document.getElementById("btnPlay").style.display = "block";
+    const audio = document.getElementById("radio");
+    audio.pause();
+    document.getElementById("btnPlay").style.display = "inline-block";
     document.getElementById("btnPause").style.display = "none";
 }
+
+window.currentTrackIndex = 0;
+
+function nextRadio() {
+    if(!window.musicLibrary || window.musicLibrary.length === 0) return;
+    window.currentTrackIndex = (window.currentTrackIndex + 1) % window.musicLibrary.length;
+    playRadio();
+}
+
+function previousRadio() {
+    if(!window.musicLibrary || window.musicLibrary.length === 0) return;
+    window.currentTrackIndex = (window.currentTrackIndex - 1 + window.musicLibrary.length) % window.musicLibrary.length;
+    playRadio();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const audio = document.getElementById('radio');
+    if(audio) {
+        audio.addEventListener('ended', nextRadio);
+        audio.addEventListener('error', function() {
+            document.getElementById('titre').innerText = '⚠️ Impossible de lire cette piste';
+            document.getElementById('btnPlay').style.display = 'inline-block';
+            document.getElementById('btnPause').style.display = 'none';
+        });
+    }
+});
 
 /* =========================
    PROGRAMME
