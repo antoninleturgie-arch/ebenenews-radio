@@ -1,0 +1,91 @@
+name: Repair Ébénénews JavaScript
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair broken duplicated JavaScript
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Replace the whole announcement function with one valid implementation.
+          start = s.find('function envoyerAnnonce() {')
+          end = s.find('function getAnnouncements() {', start)
+          if start != -1 and end != -1:
+              clean = '''function envoyerAnnonce() {
+              if(!isAdmin()) { alert('❌ Admin uniquement !'); return; }
+              const text = document.getElementById("annonceText").value;
+              if(!text.trim()) return;
+              const announcements = getAnnouncements();
+              announcements.unshift({text:text.trim(),date:new Date().toLocaleString('fr-FR')});
+              saveAnnouncements(announcements);
+              displayAnnouncements();
+              const box = document.getElementById("chatBox");
+              const div = document.createElement("div");
+              div.style.cssText = "padding: 8px; border-bottom: 1px solid #222; font-size: 13px;";
+              div.innerHTML = `🛠️ <b>ADMIN :</b> ${text}`;
+              box.appendChild(div);
+              box.scrollTop = box.scrollHeight;
+              document.getElementById("annonceText").value = "";
+              alert("✅ Annonce envoyée !");
+          }
+
+          '''
+              s = s[:start] + clean + s[end:]
+
+          # Keep only one copy of these helper functions.
+          def dedupe_function(src, name, next_name):
+              first = src.find(f'function {name}(')
+              if first == -1:
+                  return src
+              after = src.find(f'function {next_name}(', first)
+              if after == -1:
+                  return src
+              block = src[first:after]
+              # If the same function was inserted repeatedly, rebuild from the first complete copy.
+              marker = f'function {name}('
+              positions = [m.start() for m in re.finditer(re.escape(marker), block)]
+              if len(positions) <= 1:
+                  return src
+              # Extract the first function body by brace counting.
+              i = first
+              brace = src.find('{', i)
+              depth = 0
+              j = brace
+              while j < len(src):
+                  if src[j] == '{': depth += 1
+                  elif src[j] == '}':
+                      depth -= 1
+                      if depth == 0:
+                          j += 1
+                          break
+                  j += 1
+              one = src[first:j] + '\n\n'
+              return src[:first] + one + src[after:]
+
+          s = dedupe_function(s, 'migrateAccountRoles', 'loginUser')
+          s = dedupe_function(s, 'promoteCurrentAccountToAdmin', 'loginUser')
+
+          p.write_text(s, encoding='utf-8')
+      - name: Commit repaired site
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Repair Ébénénews JavaScript'
+          git push
