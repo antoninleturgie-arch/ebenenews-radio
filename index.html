@@ -817,6 +817,32 @@ function promoteCurrentAccountToAdmin() {
     alert('✅ Compte configuré comme administrateur.');
 }
 
+function migrateAccountRoles() {
+    const users = getUsers();
+    let changed = false;
+    users.forEach(u => {
+        if(!u.role) { u.role = 'user'; changed = true; }
+    });
+    if(changed) saveUsers(users);
+}
+
+function promoteCurrentAccountToAdmin() {
+    const code = prompt('Code de configuration administrateur :');
+    if(code !== 'EBENE-ADMIN-72.8') { alert('❌ Code incorrect.'); return; }
+    if(!currentUser) { alert('❌ Connectez-vous d’abord.'); return; }
+    const users = getUsers();
+    const u = users.find(x => x.id === currentUser.id);
+    if(!u) return;
+    u.role = 'admin';
+    currentUser.role = 'admin';
+    saveUsers(users);
+    saveUser();
+    displayUserInfo();
+    displayMusicAdmin();
+    displayAdminProgram();
+    alert('✅ Compte configuré comme administrateur.');
+}
+
 function loginUser() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
@@ -1362,6 +1388,11 @@ function envoyerAnnonce() {
     saveAnnouncements(announcements);
     displayAnnouncements();
 
+    const announcements=getAnnouncements();
+    announcements.unshift({text:text.trim(),date:new Date().toLocaleString('fr-FR')});
+    saveAnnouncements(announcements);
+    displayAnnouncements();
+
     const box = document.getElementById("chatBox");
     const div = document.createElement("div");
     div.style.cssText = "padding: 8px; border-bottom: 1px solid #222; font-size: 13px;";
@@ -1371,6 +1402,38 @@ function envoyerAnnonce() {
 
     document.getElementById("annonceText").value = "";
     alert("✅ Annonce envoyée !");
+}
+
+function getAnnouncements() {
+    const saved = localStorage.getItem('enneBAnnouncements');
+    return saved ? JSON.parse(saved) : [];
+}
+
+function saveAnnouncements(items) { localStorage.setItem('enneBAnnouncements', JSON.stringify(items)); }
+
+function displayAnnouncements() {
+    const list = document.getElementById('adminAnnouncementsList');
+    if(!list || !isAdmin()) return;
+    const items = getAnnouncements();
+    list.innerHTML = items.length ? '' : '<p style="color:#999">Aucune annonce publiée.</p>';
+    items.forEach((item,i) => {
+        const div=document.createElement('div');
+        div.className='file-item';
+        div.innerHTML=`<div style="flex:1"><b>${item.text.replace(/</g,'&lt;')}</b><div class="file-size">${item.date}</div></div><button class="file-action" onclick="editAnnouncement(${i})">✏️</button><button class="file-action" style="background:#d32f2f" onclick="deleteAnnouncement(${i})">❌</button>`;
+        list.appendChild(div);
+    });
+}
+
+function editAnnouncement(index) {
+    if(!isAdmin()) return;
+    const items=getAnnouncements(); const text=prompt('Modifier l’annonce :',items[index]?.text||'');
+    if(text===null || !text.trim()) return;
+    items[index].text=text.trim(); saveAnnouncements(items); displayAnnouncements();
+}
+
+function deleteAnnouncement(index) {
+    if(!isAdmin() || !confirm('Supprimer cette annonce ?')) return;
+    const items=getAnnouncements(); items.splice(index,1); saveAnnouncements(items); displayAnnouncements();
 }
 
 function getAnnouncements() {
