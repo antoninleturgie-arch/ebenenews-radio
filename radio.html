@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ébénénews 72.8 — Radio</title>
+<meta name="description" content="Ébénénews 72.8 — radio, musique, programmes et annonces.">
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Arial,system-ui,sans-serif;background:radial-gradient(circle at top,#25200f 0,#080808 42%,#050505 100%);color:#fff}main{max-width:1050px;margin:auto;padding:22px}.hero,.card{background:rgba(20,20,20,.94);border:1px solid #3d3621;border-radius:20px;box-shadow:0 15px 45px #0008}.hero{padding:24px;margin-bottom:16px}.brand{display:flex;align-items:center;gap:14px}.logo{width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:#d4af37;color:#111;font-size:28px}.brand h1{margin:0;color:#d4af37;font-size:clamp(25px,4vw,38px)}.muted{color:#aaa}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.card{padding:20px}.live{display:inline-flex;align-items:center;gap:8px;background:#201b0d;border:1px solid #5d4b18;color:#f4d66d;padding:7px 11px;border-radius:999px;font-weight:700}.dot{width:9px;height:9px;border-radius:50%;background:#d4af37;box-shadow:0 0 12px #d4af37}.controls{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}button{border:0;border-radius:11px;padding:11px 15px;font-weight:800;cursor:pointer;background:#d4af37;color:#111}button.alt{background:#2a2a2a;color:#fff;border:1px solid #555}audio{width:100%;margin-top:18px}.list{display:grid;gap:9px;margin-top:12px}.item{display:flex;justify-content:space-between;gap:10px;padding:11px 12px;background:#101010;border:1px solid #292929;border-radius:12px}.item button{padding:7px 10px}.empty{color:#999;padding:10px 0}.status{margin-top:12px;font-size:14px;color:#bdbdbd}.footer{padding:16px 4px;text-align:center;color:#777;font-size:13px}@media(max-width:780px){.grid{grid-template-columns:1fr}.hero,.card{border-radius:16px}main{padding:12px}}
+</style>
+</head>
+<body><main>
+<section class="hero"><div class="brand"><div class="logo">📻</div><div><h1>Ébénénews 72.8</h1><div class="muted">La radio Ébénénews</div></div></div><div style="margin-top:17px"><span class="live"><span class="dot"></span> RADIO EN LIGNE</span></div><p class="muted">Musique, programmes et annonces — avec lecture directe depuis le serveur radio.</p></section>
+<div class="grid">
+<section class="card"><h2>🎵 Lecteur</h2><div id="now" class="muted">Sélectionne un titre.</div><audio id="player" controls preload="metadata"></audio><div class="controls"><button id="prev">⏮ Précédent</button><button id="play">▶ Lecture</button><button class="alt" id="next">Suivant ⏭</button></div><div id="status" class="status">Connexion au serveur…</div></section>
+<section class="card"><h2>📢 Annonces</h2><div id="announcements" class="list"><div class="empty">Chargement…</div></div></section>
+</div>
+<section class="card" style="margin-top:16px"><h2>🎶 Programme musical</h2><div id="music" class="list"><div class="empty">Chargement…</div></div></section>
+<footer class="footer">Ébénénews 72.8 · <a href="https://github.com/antoninleturgie-arch/ebenenews-radio" style="color:#d4af37">GitHub</a></footer>
+</main>
+<script>
+const VAL_BASE='https://ninjantox--01a0952eaa1373ab8e304dff73c7b4f6.web.val.run';
+const api=(p)=>`${VAL_BASE}${p}`;
+const player=document.getElementById('player'),now=document.getElementById('now'),status=document.getElementById('status');
+let music=[],index=-1;
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function render(){
+ const box=document.getElementById('music');
+ if(!music.length){box.innerHTML='<div class="empty">Aucun morceau disponible pour le moment.</div>';return}
+ box.innerHTML=music.map((m,i)=>`<div class="item"><span>${esc(m.name||'Titre')}</span><button onclick="playIndex(${i})">▶</button></div>`).join('');
+}
+function playIndex(i){const m=music[i];if(!m)return;index=i;player.src= m.url.startsWith('http')?m.url:api(m.url);now.textContent='Lecture : '+(m.name||'Titre');player.play().catch(()=>{});renderCurrent()}
+function renderCurrent(){document.querySelectorAll('#music .item').forEach((e,i)=>e.style.borderColor=i===index?'#d4af37':'#292929')}
+async function load(){
+ try{const r=await fetch(api('/api/content'),{cache:'no-store'});if(!r.ok)throw new Error('serveur');const d=await r.json();music=Array.isArray(d.music)?d.music:[];render();const a=document.getElementById('announcements');const arr=Array.isArray(d.announcements)?d.announcements:[];a.innerHTML=arr.length?arr.map(x=>`<div class="item"><span>${esc(x.text||'')}</span><small class="muted">${esc(x.date||'')}</small></div>`).join(''):'<div class="empty">Aucune annonce.</div>';status.textContent='Serveur radio connecté.';if(music.length)playIndex(0);}
+ catch(e){status.textContent='Serveur radio indisponible pour le moment.';document.getElementById('music').innerHTML='<div class="empty">Impossible de charger la bibliothèque musicale.</div>'}
+}
+document.getElementById('play').onclick=()=>player.src?player.paused?player.play():player.pause():playIndex(index>=0?index:0);
+document.getElementById('next').onclick=()=>music.length&&playIndex((index+1)%music.length);
+document.getElementById('prev').onclick=()=>music.length&&playIndex((index-1+music.length)%music.length);
+player.addEventListener('ended',()=>music.length&&playIndex((index+1)%music.length));
+load();
+</script></body></html>
