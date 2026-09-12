@@ -560,9 +560,8 @@ button:hover {
         <div id="announcementTab" class="tab-content">
             <h3>Envoyer une annonce</h3>
             <textarea id="annonceText" placeholder="Écrivez votre annonce..." style="width: 100%; height: 100px; padding: 12px; border-radius: 8px; border: none; background: #222; color: white;"></textarea>
-            <button onclick="envoyerAnnonce()" style="width: 100%; margin-top: 10px;">
-                📢 Envoyer l'annonce
-            </button>
+            <button onclick="envoyerAnnonce()" style="width: 100%; margin-top: 10px;">📢 Publier l'annonce</button>
+            <div id="adminAnnouncementsList" style="margin-top:15px;"></div>
         </div>
     </section>
 
@@ -669,6 +668,7 @@ function registerUser() {
         username: username,
         password: btoa(password), // Simple encoding (pas sécurisé en prod)
         isPremium: false,
+        role: 'user',
         storageUsed: 0,
         files: [],
         playlists: [],
@@ -685,6 +685,32 @@ function registerUser() {
     updatePremiumUI();
 
     alert("✅ Compte créé avec succès !");
+}
+
+function migrateAccountRoles() {
+    const users = getUsers();
+    let changed = false;
+    users.forEach(u => {
+        if(!u.role) { u.role = 'user'; changed = true; }
+    });
+    if(changed) saveUsers(users);
+}
+
+function promoteCurrentAccountToAdmin() {
+    const code = prompt('Code de configuration administrateur :');
+    if(code !== 'EBENE-ADMIN-72.8') { alert('❌ Code incorrect.'); return; }
+    if(!currentUser) { alert('❌ Connectez-vous d’abord.'); return; }
+    const users = getUsers();
+    const u = users.find(x => x.id === currentUser.id);
+    if(!u) return;
+    u.role = 'admin';
+    currentUser.role = 'admin';
+    saveUsers(users);
+    saveUser();
+    displayUserInfo();
+    displayMusicAdmin();
+    displayAdminProgram();
+    alert('✅ Compte configuré comme administrateur.');
 }
 
 function loginUser() {
@@ -765,18 +791,9 @@ function closePremiumModal() {
 }
 
 function activatePremium() {
-    if(!currentUser) {
-        alert("❌ Veuillez d'abord créer un compte !");
-        return;
-    }
+    alert('⭐ Le Premium ne peut pas être activé gratuitement.
 
-    currentUser.isPremium = true;
-    saveUser();
-    displayUserInfo();
-    updatePremiumUI();
-    closePremiumModal();
-
-    alert("✅ Bienvenue en PREMIUM ! 🎉\n\nAccès aux :\n• Stockage illimité\n• Dépôt de fichiers\n• Playlists privées");
+Un administrateur doit vous accorder le Premium ou un vrai paiement devra être connecté.');
 }
 
 /* =========================
@@ -1003,9 +1020,8 @@ let userConnected = false;
 
 function isAdmin() {
     if(!currentUser) return false;
-    // Pour la démo, le premier utilisateur créé est admin
-    const users = getUsers();
-    return users.length > 0 && users[0].id === currentUser.id;
+    // GitHub Pages = application statique : le rôle est explicite, jamais basé sur le premier compte.
+    return currentUser.role === 'admin';
 }
 
 function loadMusicLibrary() {
@@ -1021,6 +1037,8 @@ function loadMusicLibrary() {
     }
     if(isAdmin()) {
         displayMusicAdmin();
+        displayAnnouncements();
+        displayAdminProgram();
     }
 }
 
@@ -1194,6 +1212,7 @@ function displayAdminProgram() {
 }
 
 function removeProgram(index) {
+    if(!isAdmin()) { alert('❌ Admin uniquement !'); return; }
     programSchedule.splice(index, 1);
     localStorage.setItem('enneBProgram', JSON.stringify(programSchedule));
     displayProgram();
@@ -1210,8 +1229,14 @@ function closeProgramModal() {
 }
 
 function envoyerAnnonce() {
+    if(!isAdmin()) { alert('❌ Admin uniquement !'); return; }
     const text = document.getElementById("annonceText").value;
     if(!text.trim()) return;
+
+    const announcements=getAnnouncements();
+    announcements.unshift({text:text.trim(),date:new Date().toLocaleString('fr-FR')});
+    saveAnnouncements(announcements);
+    displayAnnouncements();
 
     const box = document.getElementById("chatBox");
     const div = document.createElement("div");
@@ -1222,6 +1247,38 @@ function envoyerAnnonce() {
 
     document.getElementById("annonceText").value = "";
     alert("✅ Annonce envoyée !");
+}
+
+function getAnnouncements() {
+    const saved = localStorage.getItem('enneBAnnouncements');
+    return saved ? JSON.parse(saved) : [];
+}
+
+function saveAnnouncements(items) { localStorage.setItem('enneBAnnouncements', JSON.stringify(items)); }
+
+function displayAnnouncements() {
+    const list = document.getElementById('adminAnnouncementsList');
+    if(!list || !isAdmin()) return;
+    const items = getAnnouncements();
+    list.innerHTML = items.length ? '' : '<p style="color:#999">Aucune annonce publiée.</p>';
+    items.forEach((item,i) => {
+        const div=document.createElement('div');
+        div.className='file-item';
+        div.innerHTML=`<div style="flex:1"><b>${item.text.replace(/</g,'&lt;')}</b><div class="file-size">${item.date}</div></div><button class="file-action" onclick="editAnnouncement(${i})">✏️</button><button class="file-action" style="background:#d32f2f" onclick="deleteAnnouncement(${i})">❌</button>`;
+        list.appendChild(div);
+    });
+}
+
+function editAnnouncement(index) {
+    if(!isAdmin()) return;
+    const items=getAnnouncements(); const text=prompt('Modifier l’annonce :',items[index]?.text||'');
+    if(text===null || !text.trim()) return;
+    items[index].text=text.trim(); saveAnnouncements(items); displayAnnouncements();
+}
+
+function deleteAnnouncement(index) {
+    if(!isAdmin() || !confirm('Supprimer cette annonce ?')) return;
+    const items=getAnnouncements(); items.splice(index,1); saveAnnouncements(items); displayAnnouncements();
 }
 
 function lancerAnnounceIA() {
@@ -1258,6 +1315,8 @@ window.addEventListener('load', function() {
     loadUser();
     loadMusicLibrary();
     loadProgram();
+    migrateAccountRoles();
+    if(isAdmin()) { displayAnnouncements(); displayAdminProgram(); }
 });
 
 </script>
