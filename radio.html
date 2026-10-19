@@ -11,6 +11,13 @@
 </head>
 <body><main>
 <section class="hero"><div class="brand"><div class="logo" aria-hidden="true">📻</div><div><h1>Ébénénews 72.8</h1><div class="muted">La radio Ébénénews</div></div></div><div style="margin-top:17px"><span class="live"><span class="dot"></span> RADIO ÉBÉNÉNEWS</span></div><p class="muted">Musique, programmes et annonces.</p></section>
+<section class="card" style="margin-top:16px" aria-labelledby="directTitle">
+<h2 id="directTitle">Flux direct 24 h/24</h2>
+<p id="directStatus" class="status" role="status">Vérification de la configuration du flux…</p>
+<audio id="directPlayer" controls preload="none" style="display:none" aria-label="Flux radio direct Ébénénews"></audio>
+<div id="directNotice" class="notice">Le flux permanent n'est pas encore configuré. Le site est prêt à recevoir l'URL du serveur dans <code>radio-config.js</code>. Voir le guide de diffusion.</div>
+<p><a href="./streaming/README.md" style="color:#d4af37">Guide d'installation du flux radio</a></p>
+</section>
 <div class="grid">
 <section class="card"><h2>Lecteur audio</h2><div id="now" class="muted" aria-live="polite">Chargement de la bibliothèque…</div><audio id="player" controls preload="none"></audio><div class="controls"><button id="prev" disabled>⏮ Précédent</button><button id="play" disabled>▶ Lecture</button><button id="next" class="alt" disabled>Suivant ⏭</button></div><div id="status" class="status" role="status">Connexion au serveur radio…</div><div id="audioNotice" class="notice" hidden></div></section>
 <section class="card"><h2>Annonces</h2><div id="announcements" class="list"><div class="empty">Chargement des annonces…</div></div></section>
@@ -18,8 +25,30 @@
 <section class="card" style="margin-top:16px"><h2>Programme musical</h2><div id="music" class="list"><div class="empty">Chargement de la bibliothèque…</div></div></section>
 <footer class="footer">Ébénénews 72.8 · <a href="https://github.com/antoninleturgie-arch/ebenenews-radio" style="color:#d4af37">Dépôt GitHub</a></footer>
 </main>
+<script src="./radio-config.js"></script>
 <script>
 'use strict';
+const directPlayer=document.getElementById('directPlayer');
+const directStatus=document.getElementById('directStatus');
+const directNotice=document.getElementById('directNotice');
+function setupDirectStream(){
+ const cfg=window.RADIO_CONFIG||{};
+ const raw=typeof cfg.streamUrl==='string'?cfg.streamUrl.trim():'';
+ if(!raw){directStatus.textContent='Flux direct non configuré.';directNotice.hidden=false;return}
+ try{
+  const u=new URL(raw);
+  if(!['https:','http:'].includes(u.protocol))throw new Error('Protocole non autorisé');
+  directPlayer.src=u.href;
+  directPlayer.style.display='block';
+  directPlayer.type=cfg.streamMimeType||'audio/mpeg';
+  directStatus.textContent='Flux configuré. Appuie sur Lecture pour écouter.';
+  directNotice.hidden=true;
+  directPlayer.addEventListener('playing',()=>{directStatus.textContent='Lecture du flux direct en cours.'});
+  directPlayer.addEventListener('waiting',()=>{directStatus.textContent='Connexion au flux…'});
+  directPlayer.addEventListener('error',()=>{directStatus.textContent='Le flux est configuré mais ne répond pas. Vérifie l’URL et l’état du serveur.'});
+ }catch(e){directStatus.textContent='URL du flux invalide.';directNotice.textContent='Vérifie streamUrl dans radio-config.js. Utilise uniquement l’URL publique du flux audio.';directNotice.hidden=false}
+}
+setupDirectStream();
 const VAL_BASE='https://ninjantox--01a0952eaa1373ab8e304dff73c7b4f6.web.val.run';
 const api=(p)=>VAL_BASE+p;
 const player=document.getElementById('player');
