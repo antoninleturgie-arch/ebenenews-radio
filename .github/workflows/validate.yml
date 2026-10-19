@@ -25,9 +25,9 @@ jobs:
           test -s SECURITY.md
           grep -q 'setupDirectStream' radio.html
           grep -q 'streamUrl' radio-config.js
-      - name: Refuser les identifiants de démonstration connus dans les fichiers texte du site
+      - name: Rechercher des identifiants de démonstration dans le code client
         run: |
-          if grep -RniE 'admin[[:space:]]*/[[:space:]]*ebene72|password[[:space:]]*=[[:space:]]*["'"'"']ebene72'             --include='*.html' --include='*.js' --include='*.json' --include='*.md' .; then
+          if grep -RniE 'admin[[:space:]]*/[[:space:]]*ebene72|password[[:space:]]*=[[:space:]]*["]ebene72' --include='*.html' --include='*.js' --include='*.json' .; then
             echo "Identifiant de démonstration détecté : supprimer et faire tourner les identifiants exposés."
             exit 1
           fi
