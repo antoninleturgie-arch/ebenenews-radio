@@ -1,0 +1,33 @@
+name: Vérifier le site radio
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+      - name: Vérifier les fichiers essentiels
+        run: |
+          test -s index.html
+          test -s radio.html
+          test -s radio-config.js
+          test -s streaming/README.md
+          test -s SECURITY.md
+          grep -q 'setupDirectStream' radio.html
+          grep -q 'streamUrl' radio-config.js
+      - name: Refuser les identifiants de démonstration connus dans les fichiers texte du site
+        run: |
+          if grep -RniE 'admin[[:space:]]*/[[:space:]]*ebene72|password[[:space:]]*=[[:space:]]*["'"'"']ebene72'             --include='*.html' --include='*.js' --include='*.json' --include='*.md' .; then
+            echo "Identifiant de démonstration détecté : supprimer et faire tourner les identifiants exposés."
+            exit 1
+          fi
