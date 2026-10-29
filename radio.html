@@ -6,7 +6,7 @@
 <meta name="description" content="Ébénénews 72.8 — radio, musique, programmes et annonces.">
 <title>Ébénénews 72.8 — Radio</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Arial,system-ui,sans-serif;background:radial-gradient(circle at top,#25200f 0,#080808 42%,#050505 100%);color:#fff}main{max-width:1050px;margin:auto;padding:22px}.hero,.card{background:rgba(20,20,20,.94);border:1px solid #3d3621;border-radius:20px;box-shadow:0 15px 45px #0008}.hero{padding:24px;margin-bottom:16px}.brand{display:flex;align-items:center;gap:14px}.logo{width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:#d4af37;color:#111;font-size:28px}.brand h1{margin:0;color:#d4af37;font-size:clamp(25px,4vw,38px)}.muted{color:#aaa}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.card{padding:20px}.live{display:inline-flex;align-items:center;gap:8px;background:#201b0d;border:1px solid #5d4b18;color:#f4d66d;padding:7px 11px;border-radius:999px;font-weight:700}.dot{width:9px;height:9px;border-radius:50%;background:#d4af37;box-shadow:0 0 12px #d4af37}.controls{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}button{border:0;border-radius:11px;padding:11px 15px;font-weight:800;cursor:pointer;background:#d4af37;color:#111}button.alt{background:#2a2a2a;color:#fff;border:1px solid #555}button:disabled{opacity:.45;cursor:not-allowed}audio{width:100%;margin-top:18px}.list{display:grid;gap:9px;margin-top:12px}.item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;background:#101010;border:1px solid #292929;border-radius:12px}.item button{padding:7px 10px}.empty{color:#aaa;padding:10px 0;line-height:1.5}.status{margin-top:12px;font-size:14px;color:#d0d0d0;line-height:1.5}.footer{padding:16px 4px;text-align:center;color:#777;font-size:13px}.notice{padding:12px 14px;border:1px solid #5d4b18;background:#201b0d;border-radius:12px;color:#e7d9a0;line-height:1.5;margin-top:12px}@media(max-width:780px){.grid{grid-template-columns:1fr}.hero,.card{border-radius:16px}main{padding:12px}}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Arial,system-ui,sans-serif;background:radial-gradient(circle at top,#25200f 0,#080808 42%,#050505 100%);color:#fff}main{max-width:1050px;margin:auto;padding:22px}.hero,.card{background:rgba(20,20,20,.94);border:1px solid #3d3621;border-radius:20px;box-shadow:0 15px 45px #0008}.hero{padding:24px;margin-bottom:16px}.brand{display:flex;align-items:center;gap:14px}.logo{width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:#d4af37;color:#111;font-size:28px}.brand h1{margin:0;color:#d4af37;font-size:clamp(25px,4vw,38px)}.muted{color:#aaa}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.card{padding:20px}.live{display:inline-flex;align-items:center;gap:8px;background:#201b0d;border:1px solid #5d4b18;color:#f4d66d;padding:7px 11px;border-radius:999px;font-weight:700}.dot{width:9px;height:9px;border-radius:50%;background:#d4af37;box-shadow:0 0 12px #d4af37}.controls{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}button{border:0;border-radius:11px;padding:11px 15px;font-weight:800;cursor:pointer;background:#d4af37;color:#111}button.alt{background:#2a2a2a;color:#fff;border:1px solid #555}button:disabled{opacity:.45;cursor:not-allowed}audio{width:100%;margin-top:18px}.list{display:grid;gap:9px;margin-top:12px}.item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;background:#101010;border:1px solid #292929;border-radius:12px}.item button{padding:7px 10px}.empty{color:#aaa;padding:10px 0;line-height:1.5}.status{margin-top:12px;font-size:14px;color:#d0d0d0;line-height:1.5}.footer{padding:16px 4px;text-align:center;color:#777;font-size:13px}.notice{padding:12px 14px;border:1px solid #5d4b18;background:#201b0d;border-radius:12px;color:#e7d9a0;line-height:1.5;margin-top:12px}.chat-form{display:grid;gap:10px;margin-top:12px}.chat-form input,.chat-form textarea{width:100%;padding:11px;border-radius:10px;border:1px solid #555;background:#111;color:#fff;font:inherit}.chat-form textarea{min-height:78px;resize:vertical}.chat-message{display:grid;gap:7px;padding:12px;background:#101010;border:1px solid #292929;border-radius:12px}.chat-message.admin{border-color:#8d7425}.chat-meta{display:flex;justify-content:space-between;gap:8px;color:#aaa;font-size:12px}.chat-reply{display:flex;gap:8px;flex-wrap:wrap}.chat-reply input{flex:1;min-width:160px;padding:9px;border-radius:9px;border:1px solid #555;background:#111;color:#fff}.chat-reply button{padding:8px 10px}.@media(max-width:780px){.grid{grid-template-columns:1fr}.hero,.card{border-radius:16px}main{padding:12px}}
 </style>
 </head>
 <body><main>
@@ -23,6 +23,22 @@
 <section class="card"><h2>Annonces</h2><div id="announcements" class="list"><div class="empty">Chargement des annonces…</div></div></section>
 </div>
 <section class="card" style="margin-top:16px"><h2>Programme musical</h2><div id="music" class="list"><div class="empty">Chargement de la bibliothèque…</div></div></section>
+<section class="card" style="margin-top:16px" aria-labelledby="chatTitle">
+<h2 id="chatTitle">Chat live des auditeurs</h2>
+<p class="status" id="chatStatus" role="status">Connexion au chat en direct…</p>
+<div class="chat-form">
+<label for="chatName">Ton pseudo</label><input id="chatName" maxlength="40" placeholder="Ex. NinjaAntox" autocomplete="nickname">
+<label for="chatText">Ton message</label><textarea id="chatText" maxlength="1000" placeholder="Écris un message à la communauté…" required></textarea>
+<button id="chatSend" type="button">Envoyer le message</button>
+</div>
+<div class="controls"><button id="adminToggle" type="button" class="alt">Mode administrateur</button></div>
+<div id="adminPanel" hidden class="chat-form">
+<label for="adminPassword">Mot de passe administrateur</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Mot de passe admin">
+<p class="muted">Le mot de passe est vérifié côté serveur et n’est pas enregistré sur cette page.</p>
+</div>
+<h3>Messages récents</h3><div id="chatMessages" class="list"><div class="empty">Chargement des messages…</div></div>
+<p class="muted">Les messages publics sont visibles par tous. N’y publie pas d’informations personnelles.</p>
+</section>
 <footer class="footer">Ébénénews 72.8 · <a href="https://github.com/antoninleturgie-arch/ebenenews-radio" style="color:#d4af37">Dépôt GitHub</a></footer>
 </main>
 <script src="./radio-config.js"></script>
@@ -61,8 +77,8 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function setControls(){controls.forEach(b=>b.disabled=music.length===0)}
 function localPlaylist(){
  return [
-  {name:'Kulakovka — Cyberpunk Music',url:'./music/kulakovka-cyberpunk-music-624631.mp3'},
-  {name:'Kulakovka — Dark Synthwave',url:'./music/kulakovka-dark-synthwave-624644(1).mp3'}
+  {name:'Kulakovka — Cyberpunk Music',url:'./music/musique1.mp3'},
+  {name:'Kulakovka — Dark Synthwave',url:'./music/musique2.mp3'}
  ];
 }
 function render(){
@@ -107,4 +123,53 @@ player.addEventListener('play',()=>{document.getElementById('play').textContent=
 player.addEventListener('ended',()=>music.length&&playIndex((index+1)%music.length));
 player.addEventListener('error',()=>{if(player.src){status.textContent='Le fichier audio sélectionné ne peut pas être lu.';audioNotice.textContent='Vérifie le lien et le contenu du fichier audio sur le serveur.';audioNotice.hidden=false}});
 load();
+
+const CHAT_API='https://ninjantox--f0fdc4e0d3b311f1958b1607ee4eb77e.web.val.run';
+const chatStatus=document.getElementById('chatStatus');
+const chatMessages=document.getElementById('chatMessages');
+const adminPanel=document.getElementById('adminPanel');
+let chatBusy=false;
+function renderChatMessages(messages){
+ if(!Array.isArray(messages)||!messages.length){chatMessages.innerHTML='<div class="empty">Aucun message pour le moment. Lance la conversation !</div>';return}
+ const byId=new Map(messages.map(m=>[Number(m.id),m]));
+ chatMessages.innerHTML=messages.map(m=>{
+  const date=esc(m.created_at||'');
+  const reply=m.reply_to?byId.get(Number(m.reply_to)):null;
+  const isAdmin=m.kind==='admin';
+  return '<article class="chat-message '+(isAdmin?'admin':'')+'"><div class="chat-meta"><strong>'+esc(m.name||'Auditeur')+(isAdmin?' · ADMIN':'')+'</strong><span>'+date+'</span></div>'+(reply?'<div class="muted">Réponse à '+esc(reply.name||'Auditeur')+'</div>':'')+'<div>'+esc(m.text||'')+'</div>'+(!isAdmin?'<div class="chat-reply"><input maxlength="1000" aria-label="Réponse au message" placeholder="Répondre à ce message…" data-reply-text="'+Number(m.id)+'"><button type="button" data-reply="'+Number(m.id)+'">Répondre (admin)</button></div>':'')+'</article>';
+ }).join('');
+ chatMessages.querySelectorAll('[data-reply]').forEach(b=>b.addEventListener('click',()=>sendAdminReply(Number(b.dataset.reply))));
+}
+async function refreshChat(){
+ try{
+  const r=await fetch(CHAT_API,{cache:'no-store'});const d=await r.json();
+  if(!r.ok||!d.ok)throw new Error(d.error||'Erreur serveur');
+  renderChatMessages(d.messages);chatStatus.textContent='Chat connecté · actualisation automatique toutes les 5 secondes.';
+ }catch(e){chatStatus.textContent='Chat momentanément indisponible. Réessaie dans quelques instants.'}
+}
+async function sendChatMessage(){
+ if(chatBusy)return;const field=document.getElementById('chatText');const text=field.value.trim();
+ if(!text){chatStatus.textContent='Écris un message avant de l’envoyer.';return}
+ chatBusy=true;document.getElementById('chatSend').disabled=true;
+ try{
+  const r=await fetch(CHAT_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('chatName').value.trim()||'Auditeur',text})});
+  const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'Envoi impossible');
+  field.value='';chatStatus.textContent='Message envoyé.';await refreshChat();
+ }catch(e){chatStatus.textContent=e.message||'Impossible d’envoyer le message.'}
+ finally{chatBusy=false;document.getElementById('chatSend').disabled=false}
+}
+async function sendAdminReply(id){
+ const input=chatMessages.querySelector('[data-reply-text="'+id+'"]');const text=input?.value.trim();const password=document.getElementById('adminPassword').value;
+ if(!password){adminPanel.hidden=false;chatStatus.textContent='Entre le mot de passe administrateur pour répondre.';document.getElementById('adminPassword').focus();return}
+ if(!text){chatStatus.textContent='Écris la réponse avant de l’envoyer.';input?.focus();return}
+ try{
+  const r=await fetch(CHAT_API,{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Password':password},body:JSON.stringify({action:'reply',replyTo:id,text})});
+  const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'Réponse impossible');
+  chatStatus.textContent='Réponse administrateur publiée.';await refreshChat();
+ }catch(e){chatStatus.textContent=e.message||'Impossible de publier la réponse.'}
+}
+document.getElementById('chatSend').addEventListener('click',sendChatMessage);
+document.getElementById('chatText').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();sendChatMessage()}});
+document.getElementById('adminToggle').addEventListener('click',()=>{adminPanel.hidden=!adminPanel.hidden;if(!adminPanel.hidden)document.getElementById('adminPassword').focus()});
+refreshChat();setInterval(refreshChat,5000);
 </script></body></html>
