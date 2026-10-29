@@ -59,6 +59,12 @@ const controls=['prev','play','next'].map(id=>document.getElementById(id));
 let music=[],index=-1;
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function setControls(){controls.forEach(b=>b.disabled=music.length===0)}
+function localPlaylist(){
+ return [
+  {name:'Kulakovka — Cyberpunk Music',url:'./music/kulakovka-cyberpunk-music-624631.mp3'},
+  {name:'Kulakovka — Dark Synthwave',url:'./music/kulakovka-dark-synthwave-624644(1).mp3'}
+ ];
+}
 function render(){
  const box=document.getElementById('music');
  if(!music.length){box.innerHTML='<div class="empty">Aucun morceau n’est disponible depuis le serveur. Les fichiers MP3 présents dans le dépôt sont des fichiers de remplacement et doivent être remplacés par de vrais fichiers audio.</div>';setControls();return}
@@ -81,13 +87,14 @@ async function load(){
   if(!r.ok)throw new Error('HTTP '+r.status);
   const d=await r.json();
   music=Array.isArray(d.music)?d.music.filter(m=>m&&typeof m.url==='string'&&m.url.trim()):[];
+  if(!music.length) music=localPlaylist();
   render();
   const arr=Array.isArray(d.announcements)?d.announcements:[];
   const a=document.getElementById('announcements');
   a.innerHTML=arr.length?arr.map(x=>'<div class="item"><span>'+esc(x.text||'')+'</span><small class="muted">'+esc(x.date||'')+'</small></div>').join(''):'<div class="empty">Aucune annonce pour le moment.</div>';
   status.textContent=music.length?'Bibliothèque chargée. Choisis un morceau pour démarrer.':'Serveur connecté, mais aucun morceau audio utilisable n’est publié.';
  }catch(e){
-  music=[];render();
+  music=localPlaylist();render();
   document.getElementById('announcements').innerHTML='<div class="empty">Le serveur des annonces est indisponible. Réessaie un peu plus tard.</div>';
   status.textContent='Impossible de joindre le serveur radio. Le site est ouvert, mais la musique et les annonces nécessitent le serveur.';
  }
