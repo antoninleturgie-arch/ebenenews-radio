@@ -79,3 +79,28 @@ AzuraCast et Icecast sont des logiciels gratuits, mais ils doivent fonctionner s
 
 Documentation officielle AzuraCast : https://www.azuracast.com/docs/
 Documentation officielle Icecast : https://www.icecast.org/docs/
+
+
+## Parcours gratuit choisi : installer sur un PC Windows 10/11
+
+Cette option n'a pas de coût de licence, mais elle demande une installation technique et le PC doit rester allumé, connecté à Internet et ne pas se mettre en veille pendant l'émission.
+
+1. Vérifier que le PC dispose d'au moins 2 Go de RAM (4 Go recommandés) et de 20 Go d'espace libre.
+2. Installer Docker Desktop pour Windows : https://www.docker.com/products/docker-desktop/
+3. Pendant l'installation, garder l'option WSL 2 activée. Suivre ensuite le guide officiel Windows d'AzuraCast : https://www.azuracast.com/docs/getting-started/installation/windows/
+4. Installer Ubuntu depuis le Microsoft Store si le guide le demande, ouvrir Ubuntu et suivre le guide d'installation Docker d'AzuraCast : https://www.azuracast.com/docs/getting-started/installation/docker/
+5. Une fois AzuraCast installé, ouvrir `http://localhost` sur ce PC, créer le compte administrateur et créer la station « Ébénénews 72.8 ».
+6. Ajouter les fichiers audio dont tu as le droit de diffuser la musique, puis activer l'AutoDJ si tu veux une programmation automatique.
+7. Pour parler au micro, installer BUTT depuis https://danielnoethen.de/butt/ et configurer le serveur avec les identifiants source fournis par AzuraCast. Sélectionner le micro, puis démarrer la diffusion.
+8. Avant de connecter le site public, il faudra rendre le flux accessible depuis Internet. `http://localhost` ne fonctionne que sur le PC lui-même. Selon le routeur et le fournisseur Internet, il peut falloir configurer les ports réseau, une adresse publique/DNS et HTTPS. Ne partage pas les identifiants privés.
+
+### Limite réseau importante
+
+Installer AzuraCast localement n'expose pas automatiquement la radio au public. Si le routeur, le fournisseur Internet (par exemple CGNAT) ou le pare-feu empêche les connexions entrantes, les auditeurs ne pourront pas accéder au flux. Dans ce cas, il faudra une solution de tunnel ou un serveur public compatible ; cela peut compliquer l'option entièrement gratuite.
+
+### Ordre de mise en service
+
+- D'abord vérifier que l'interface AzuraCast s'ouvre en local.
+- Ensuite vérifier le flux depuis un autre appareil connecté au même réseau.
+- Puis tester le flux depuis un téléphone en données mobiles.
+- Seulement quand ce test externe réussit, copier l'URL publique d'écoute dans `radio-config.js`.
