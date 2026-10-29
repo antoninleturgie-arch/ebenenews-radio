@@ -129,6 +129,7 @@ const chatStatus=document.getElementById('chatStatus');
 const chatMessages=document.getElementById('chatMessages');
 const adminPanel=document.getElementById('adminPanel');
 let chatBusy=false;
+let lastChatSnapshot='';
 function renderChatMessages(messages){
  if(!Array.isArray(messages)||!messages.length){chatMessages.innerHTML='<div class="empty">Aucun message pour le moment. Lance la conversation !</div>';return}
  const byId=new Map(messages.map(m=>[Number(m.id),m]));
@@ -144,7 +145,7 @@ async function refreshChat(){
  try{
   const r=await fetch(CHAT_API,{cache:'no-store'});const d=await r.json();
   if(!r.ok||!d.ok)throw new Error(d.error||'Erreur serveur');
-  renderChatMessages(d.messages);chatStatus.textContent='Chat connecté · actualisation automatique toutes les 5 secondes.';
+  const snapshot=JSON.stringify(d.messages||[]);if(snapshot!==lastChatSnapshot){renderChatMessages(d.messages);lastChatSnapshot=snapshot;}chatStatus.textContent='Chat connecté · actualisation automatique toutes les 5 secondes.';
  }catch(e){chatStatus.textContent='Chat momentanément indisponible. Réessaie dans quelques instants.'}
 }
 async function sendChatMessage(){
