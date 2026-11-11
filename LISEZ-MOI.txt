@@ -1,0 +1,20 @@
+ÉBÉNÉNEWS 72.8 — PACK MP3
+
+Ce pack contient les deux vrais fichiers audio, renommés pour correspondre
+aux chemins déjà utilisés par le lecteur :
+
+music/musique1.mp3
+music/musique2.mp3
+
+Pour les publier :
+1. Ouvrir le dépôt https://github.com/antoninleturgie-arch/ebenenews-radio
+2. Ouvrir le dossier music (le créer s'il n'existe pas).
+3. Ajouter les deux fichiers musique1.mp3 et musique2.mp3 en remplaçant
+   les fichiers de remplacement éventuels.
+4. Valider le commit.
+
+Le lecteur radio.html a été corrigé pour résoudre les chemins MP3 depuis
+le site GitHub Pages. Après publication, tester :
+https://antoninleturgie-arch.github.io/ebenenews-radio/radio.html
+
+Les fichiers MP3 doivent être utilisés conformément à leurs droits.
