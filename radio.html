@@ -92,7 +92,7 @@ function renderCurrent(){document.querySelectorAll('#music .item').forEach((e,i)
 function playIndex(i){
  const m=music[i];if(!m)return;
  let url;
- try{url=new URL(String(m.url||''),VAL_BASE);if(!['https:','http:'].includes(url.protocol))throw new Error('URL non prise en charge');}
+ try{url=new URL(String(m.url||''),document.baseURI);if(!['https:','http:'].includes(url.protocol))throw new Error('URL non prise en charge');}
  catch(e){status.textContent='Adresse audio invalide pour ce morceau.';return}
  index=i;player.src=url.href;now.textContent='Sélection : '+(m.name||'Titre sans nom');audioNotice.hidden=true;renderCurrent();
  player.play().then(()=>{document.getElementById('play').textContent='⏸ Pause';status.textContent='Lecture en cours.'}).catch(()=>{status.textContent='Lecture impossible : le fichier audio est indisponible ou son format n’est pas reconnu.';audioNotice.textContent='Vérifie que l’adresse du morceau pointe vers un vrai fichier audio MP3/OGG accessible. Un fichier texte renommé en .mp3 ne peut pas être lu.';audioNotice.hidden=false});
