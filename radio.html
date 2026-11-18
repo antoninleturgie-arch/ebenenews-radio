@@ -10,7 +10,7 @@
 </style>
 </head>
 <body><main>
-<section class="hero"><div class="brand"><div class="logo" aria-hidden="true">📻</div><div><h1>Ébénénews 72.8</h1><div class="muted">La radio Ébénénews</div></div></div><div style="margin-top:17px"><span class="live"><span class="dot"></span> RADIO ÉBÉNÉNEWS</span></div><p class="muted">Musique, programmes et annonces.</p><button id="adminEntry" class="admin-entry" type="button">🔐 Connexion administrateur</button></section>
+<section class="hero"><div class="brand"><div class="logo" aria-hidden="true">📻</div><div><h1>Ébénénews 72.8</h1><div class="muted">La radio Ébénénews</div></div></div><div style="margin-top:17px"><span class="live"><span class="dot"></span> RADIO ÉBÉNÉNEWS</span></div><p class="muted">Musique, programmes et annonces.</p><button id="adminEntry" class="admin-entry" type="button" onclick="document.getElementById('adminPanel').hidden=false;document.getElementById('chatSection').scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('adminPassword').focus();">🔐 Connexion administrateur</button></section>
 <section class="card" style="margin-top:16px" aria-labelledby="directTitle">
 <h2 id="directTitle">Flux direct 24 h/24</h2>
 <p id="directStatus" class="status" role="status">Vérification de la configuration du flux…</p>
