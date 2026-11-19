@@ -10,7 +10,7 @@
 </style>
 </head>
 <body><main>
-<section class="hero"><div class="brand"><div class="logo" aria-hidden="true">📻</div><div><h1>Ébénénews 72.8</h1><div class="muted">La radio Ébénénews</div></div></div><div style="margin-top:17px"><span class="live"><span class="dot"></span> RADIO ÉBÉNÉNEWS</span></div><p class="muted">Musique, programmes et annonces.</p><button id="adminEntry" class="admin-entry" type="button" onclick="document.getElementById('adminPanel').hidden=false;document.getElementById('chatSection').scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('adminPassword').focus();">🔐 Connexion administrateur</button></section>
+<section class="hero"><div class="brand"><div class="logo" aria-hidden="true">📻</div><div><h1>Ébénénews 72.8</h1><div class="muted">La radio Ébénénews</div></div></div><div style="margin-top:17px"><span class="live"><span class="dot"></span> RADIO ÉBÉNÉNEWS</span></div><p class="muted">Musique, programmes et annonces.</p><div class="controls"><button id="adminEntry" class="admin-entry" type="button">🔐 Répondre au chat (admin)</button><a class="admin-entry" href="https://ninjantox--01a0952eaa1373ab8e304dff73c7b4f6.web.val.run/site?redirect=admin#account-form" target="_blank" rel="noopener noreferrer">Ouvrir l’administration complète</a></div></section>
 <section class="card" style="margin-top:16px" aria-labelledby="directTitle">
 <h2 id="directTitle">Flux direct 24 h/24</h2>
 <p id="directStatus" class="status" role="status">Vérification de la configuration du flux…</p>
@@ -97,12 +97,6 @@ const controls=['prev','play','next'].map(id=>document.getElementById(id));
 let music=[],index=-1,autoRadio=false,firstRadioIntro=true;
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function setControls(){controls.forEach(b=>b.disabled=music.length===0)}
-function localPlaylist(){
- return [
-  {name:'Kulakovka — Cyberpunk Music',url:'./music/musique1.mp3'},
-  {name:'Kulakovka — Dark Synthwave',url:'./music/musique2.mp3'}
- ];
-}
 function render(){
  const box=document.getElementById('music');
  if(!music.length){box.innerHTML='<div class="empty">Aucun morceau validé n’est disponible pour le moment.</div>';setControls();return}
@@ -125,16 +119,17 @@ async function load(){
   if(!r.ok)throw new Error('HTTP '+r.status);
   const d=await r.json();
   music=Array.isArray(d.music)?d.music.filter(m=>m&&typeof m.url==='string'&&m.url.trim()):[];
-  if(!music.length) music=localPlaylist();
   render();
   const arr=Array.isArray(d.announcements)?d.announcements:[];
   const a=document.getElementById('announcements');
   a.innerHTML=arr.length?arr.map(x=>'<div class="item"><span>'+esc(x.text||'')+'</span><small class="muted">'+esc(x.date||'')+'</small></div>').join(''):'<div class="empty">Aucune annonce pour le moment.</div>';
   status.textContent=music.length?'Bibliothèque chargée. Choisis un morceau pour démarrer.':'Serveur connecté, mais aucun morceau audio utilisable n’est publié.';
  }catch(e){
-  music=localPlaylist();render();
+  music=[];render();
   document.getElementById('announcements').innerHTML='<div class="empty">Le serveur des annonces est indisponible. Réessaie un peu plus tard.</div>';
-  status.textContent='Impossible de joindre le serveur radio. Le site est ouvert, mais la musique et les annonces nécessitent le serveur.';
+  status.textContent='Serveur radio indisponible. Aucun fichier audio local valide n’est installé ; la lecture reprendra lorsque le serveur sera de nouveau accessible.';
+  audioNotice.textContent='Les anciens chemins de secours ne correspondaient pas à des fichiers audio valides. Aucun faux morceau ne sera affiché.';
+  audioNotice.hidden=false;
  }
 }
 document.getElementById('play').addEventListener('click',()=>{if(!music.length)return;if(!player.src)playIndex(index>=0?index:0);else if(player.paused)player.play().then(()=>{document.getElementById('play').textContent='⏸ Pause'}).catch(()=>{});else player.pause()});
