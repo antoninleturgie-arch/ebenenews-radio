@@ -82,7 +82,7 @@ const now=document.getElementById('now');
 const status=document.getElementById('status');
 const audioNotice=document.getElementById('audioNotice');
 const controls=['prev','play','next'].map(id=>document.getElementById(id));
-let music=[],index=-1,autoRadio=false;
+let music=[],index=-1,autoRadio=false,firstRadioIntro=true;
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function setControls(){controls.forEach(b=>b.disabled=music.length===0)}
 function localPlaylist(){
@@ -104,7 +104,7 @@ function playIndex(i){
  try{url=new URL(String(m.url||''),document.baseURI);if(!['https:','http:'].includes(url.protocol))throw new Error('URL non prise en charge');}
  catch(e){status.textContent='Adresse audio invalide pour ce morceau.';return}
  index=i;player.src=url.href;now.textContent='À l’antenne : '+(m.name||'Titre sans nom');audioNotice.hidden=true;renderCurrent();
- player.play().then(()=>{status.textContent='Radio en lecture automatique.';if(autoRadio)hostSpeak(true)}).catch(()=>{status.textContent='Clique sur « Démarrer la radio » pour autoriser la lecture dans ton navigateur.';audioNotice.textContent='Le navigateur bloque le démarrage automatique tant que l’auditeur n’a pas appuyé une première fois sur Démarrer.';audioNotice.hidden=false});
+ player.play().then(()=>{status.textContent='Radio en lecture automatique.';if(autoRadio){hostSpeak(firstRadioIntro?false:true);firstRadioIntro=false}}).catch(()=>{status.textContent='Clique sur « Démarrer la radio » pour autoriser la lecture dans ton navigateur.';audioNotice.textContent='Le navigateur bloque le démarrage automatique tant que l’auditeur n’a pas appuyé une première fois sur Démarrer.';audioNotice.hidden=false});
 }
 async function load(){
  try{
@@ -178,7 +178,7 @@ function hostSpeak(trackOnly=false){
 document.getElementById('hostSpeak').addEventListener('click',()=>hostSpeak(false));
 document.getElementById('hostTrack').addEventListener('click',()=>hostSpeak(true));
 document.getElementById('hostStop').addEventListener('click',()=>{if('speechSynthesis' in window)window.speechSynthesis.cancel();hostStatus.textContent='Micro coupé.'});
-document.getElementById('autoRadioButton').addEventListener('click',()=>{const b=document.getElementById('autoRadioButton');if(autoRadio){autoRadio=false;player.pause();b.textContent='▶ Reprendre la radio';status.textContent='Radio en pause.';return}if(!music.length){status.textContent='Aucun morceau validé à diffuser.';return}autoRadio=true;b.textContent='■ Arrêter la radio';playIndex(index>=0?index:0);hostSpeak(false)});
+document.getElementById('autoRadioButton').addEventListener('click',()=>{const b=document.getElementById('autoRadioButton');if(autoRadio){autoRadio=false;player.pause();b.textContent='▶ Reprendre la radio';status.textContent='Radio en pause.';return}if(!music.length){status.textContent='Aucun morceau validé à diffuser.';return}autoRadio=true;firstRadioIntro=true;b.textContent='■ Arrêter la radio';playIndex(index>=0?index:0)});
 load();
 
 const CHAT_API='https://ninjantox--f0fdc4e0d3b311f1958b1607ee4eb77e.web.val.run';
