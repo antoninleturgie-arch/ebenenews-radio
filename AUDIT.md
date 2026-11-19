@@ -1,5 +1,29 @@
 # Audit technique — Ébénénews 72.8
 
+## État vérifié le 19 novembre 2026
+
+- Le site GitHub Pages répond en HTTP 200. Le lien vers la vraie connexion/administration Val Town est maintenant visible depuis `radio.html`.
+- Le backend Val Town répond en HTTP 200 sur `/api/health`. `/api/content` retourne 2 morceaux, 0 programme et 0 annonce.
+- Les deux fichiers audio publiés répondent en HTTP 200 avec le type `audio/mpeg`.
+- `radio-config.js` garde `streamUrl` vide : aucun flux commun permanent n'est encore configuré.
+- La base contient 1 compte administrateur et 2 comptes auteurs. Sans session, `/api/account/me` répond 401 et les API d'administration répondent 403. Le secret réservé aux réponses administrateur du chat est présent dans l'environnement Val Town ; sa valeur n'a pas été lue. Cela ne prouve pas à lui seul qu'une connexion réelle avec le compte administrateur a réussi.
+- Le portail auteur existe sur la branche `author-portal-dev`, mais n'est pas intégré à `main`. Il permet les dépôts et validations ; aucune API de statistiques d'écoute auteur n'a été trouvée.
+- La base ne contient pas de table d'événements d'écoute. `user_presence` mesure la présence de comptes connectés, pas les auditeurs radio. Les écoutes, auditeurs uniques et durées ne sont donc pas encore mesurables.
+- Le chat Val Town répond en HTTP 200 et contient 4 messages enregistrés au moment du contrôle.
+
+## Priorités de reprise
+
+1. **P0 — Flux permanent :** installer/configurer un vrai serveur de diffusion et renseigner son URL publique dans `radio-config.js` uniquement après un test réel.
+2. **P1 — Administration :** vérifier une connexion administrateur réussie avec les identifiants saisis par le propriétaire, sans lire ni stocker le mot de passe ; conserver le verrouillage serveur des API.
+3. **P1 — Portail auteur :** auditer la branche de développement puis intégrer progressivement ses fonctions sans écraser les changements plus récents de `main`.
+4. **P1 — Statistiques :** ajouter des événements d'écoute fiables (démarrage, durée, titre) et des identifiants de session pseudonymisés ; distinguer clairement comptes connectés et auditeurs.
+5. **P2 — Tableau de bord :** présenter les seules mesures réellement disponibles, avec leurs périodes et leurs limites.
+6. **P2 — Espace auteur :** calculer les statistiques par auteur et limiter chaque auteur à ses propres contenus ; réserver la vue globale à l'administrateur.
+7. **P2 — Contenus :** remplir et gérer les programmes/annonces ; renforcer le chat contre le spam et les abus.
+8. **P3 — Jeux :** créer plusieurs jeux réellement jouables, tactiles et adaptés au clavier.
+9. **P3 — Audio :** améliorer la reprise, le chargement et la recherche dans les morceaux (le serveur audio annonce actuellement `Accept-Ranges: none`).
+
+---
 Ce document reprend l'audit et suit les corrections sans prétendre qu'une infrastructure non déployée est déjà opérationnelle.
 
 ## Problèmes prioritaires
@@ -16,14 +40,14 @@ Aucun mot de passe administrateur ne doit apparaître dans le HTML, le JavaScrip
 
 **Correction :** règles documentées dans [SECURITY.md](SECURITY.md). Les recherches de code effectuées dans les fichiers indexés du dépôt n'ont pas trouvé la chaîne de démonstration signalée dans l'audit ; cela ne garantit pas que chaque archive binaire ou ancienne version soit exempte de secrets.
 
-**État :** aucun secret serveur n'a été ajouté au dépôt. Toute authentification réelle doit être effectuée côté serveur.
+**État vérifié le 19/11/2026 :** le secret destiné aux réponses administrateur du chat est configuré dans l'environnement Val Town et n'est pas présent dans GitHub. L'authentification du compte d'administration est distincte : elle utilise les comptes et sessions du backend. Les contrôles sans session renvoient bien 401/403 ; une connexion valide n'a pas été simulée avec un mot de passe inconnu.
 
 ### 3. Dépendance au backend externe
 Le lecteur existant utilise encore l'API Val Town pour charger les morceaux et les annonces. Si cette API tombe, cette partie de la page ne peut pas fonctionner.
 
 **Correction préparée :** le flux permanent a sa configuration séparée dans `radio-config.js`. L'API historique n'a pas été supprimée afin de préserver les fonctionnalités existantes.
 
-**État :** la migration complète des annonces et de la bibliothèque nécessite un backend de remplacement et ses données.
+**État vérifié le 19/11/2026 :** le backend Val Town est actif et renvoie deux morceaux publiés. Les programmes et annonces sont vides. Le site public dépend toujours de cette API pour la bibliothèque.
 
 ### 4. Démarrage automatique du son
 Les navigateurs bloquent généralement la lecture audio sans action de l'utilisateur.
@@ -41,9 +65,9 @@ Les statistiques locales du navigateur ne représentent pas l'audience globale e
 **Correction requise côté serveur :** collecter les sessions, auditeurs connectés, durées d'écoute et morceaux joués. Les compteurs du navigateur ne doivent pas être présentés comme des statistiques globales.
 
 ### 7. Chat public
-Le chat doit être protégé côté serveur : validation des messages, échappement HTML, limitation de fréquence, anti-spam et modération.
+Le chat est présent dans `radio.html` et utilise un endpoint Val Town séparé. Le contrôle du 19/11/2026 a confirmé que la lecture des messages répond en HTTP 200 et que les réponses administrateur utilisent un secret côté serveur, sans l'exposer au navigateur.
 
-**État :** la page actuellement publiée dans ce dépôt ne contient pas de chat. Il faut retrouver ou déployer le backend et l'interface correspondants avant de pouvoir sécuriser cette fonctionnalité réelle.
+**À renforcer :** vérifier les limites de fréquence, l'anti-spam, la modération et les règles de conservation. Le bouton de la page publique distingue désormais la réponse administrateur au chat de l'accès à l'administration complète.
 
 ### 8. Organisation du dépôt
 Conserver le code et les médias utiles ; ne supprimer aucun ZIP ni fichier musical existant sans vérifier son contenu et son utilité. Ne jamais stocker de secrets dans Git.
