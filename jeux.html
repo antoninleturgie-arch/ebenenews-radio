@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Trois mini-jeux gratuits Ébénénews 72.8, jouables sur téléphone et ordinateur.">
+<meta name="theme-color" content="#111111">
+<title>Jeux — Ébénénews 72.8</title>
+<style>
+:root{color-scheme:dark;--gold:#d4af37;--panel:#171717;--line:#393326;--muted:#b8b8b8}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#29230f,#080808 48%);color:#fff;font:16px/1.5 Arial,system-ui,sans-serif}
+main{width:min(980px,100%);margin:auto;padding:18px}
+header,.game-panel,.game-nav{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;margin:0 0 14px;box-shadow:0 12px 34px #0007}
+header h1{margin:8px 0;color:var(--gold);font-size:clamp(1.8rem,5vw,2.6rem)}
+header p,.muted{color:var(--muted)}
+a{color:var(--gold)}
+.back{display:inline-block;text-decoration:none;font-weight:700}
+.game-nav{display:flex;gap:9px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;border:1px solid transparent;border-radius:11px;padding:11px 15px;background:var(--gold);color:#111;cursor:pointer;touch-action:manipulation}
+button.secondary{background:#292929;border-color:#555;color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.game-nav button[aria-pressed="true"]{background:#fff;color:#111}
+.game-panel h2{margin-top:0;color:var(--gold)}
+.game-panel[hidden]{display:none}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+.status{min-height:1.6em;color:#e8dcae}
+.question{font-size:1.2rem;font-weight:700;margin:14px 0}
+.answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.answer{background:#292929;border-color:#555;color:#fff;text-align:left;min-height:54px}
+.answer.good{background:#17452b;border-color:#3d9b61}
+.answer.bad{background:#542020;border-color:#b75b5b}
+.memory-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:560px;margin-top:18px}
+.memory-card{min-height:88px;font-size:clamp(1.5rem,7vw,2.4rem);background:#292929;border:1px solid #655323;color:#fff}
+.memory-card.is-open,.memory-card.is-matched{background:#3b3218;border-color:var(--gold)}
+.memory-card.is-matched{opacity:.75}
+.reflex-button{width:100%;min-height:150px;margin-top:16px;font-size:clamp(1.3rem,5vw,2rem);background:#6b4d15;color:#fff}
+.reflex-button.ready{background:#176a39}
+.reflex-button:disabled{opacity:1}
+.small{font-size:.9rem;color:var(--muted)}
+footer{text-align:center;color:#888;padding:12px}
+@media(max-width:560px){main{padding:10px}.game-panel,header,.game-nav{padding:15px;border-radius:14px}.answers{grid-template-columns:1fr}.memory-grid{gap:7px}.memory-card{min-height:72px;padding:8px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<a class="back" href="./radio.html">← Retour à Ébénénews 72.8</a>
+<h1>Les jeux Ébénénews</h1>
+<p>Trois petits défis pour jouer seul, sur téléphone ou sur ordinateur. Aucun compte n'est nécessaire.</p>
+</header>
+
+<nav class="game-nav" aria-label="Choisir un jeu">
+<button type="button" data-game="quiz" aria-pressed="true">Quiz ninja</button>
+<button type="button" data-game="memory" aria-pressed="false">Mémoire</button>
+<button type="button" data-game="reflex" aria-pressed="false">Réflexes</button>
+</nav>
+
+<section class="game-panel" id="panel-quiz">
+<h2>Quiz ninja</h2>
+<p class="muted">Cinq questions courtes. Choisis une réponse, puis découvre ton score.</p>
+<div id="quizQuestion" hidden>
+<p id="quizCount" class="small"></p>
+<p id="quizText" class="question"></p>
+<div id="quizAnswers" class="answers"></div>
+<p id="quizFeedback" class="status" role="status" aria-live="polite"></p>
+<div class="actions"><button id="quizNext" type="button" hidden>Question suivante</button></div>
+</div>
+<p id="quizResult" class="status" role="status" aria-live="polite">Prêt à tester tes connaissances ?</p>
+<div class="actions"><button id="quizStart" type="button">Commencer le quiz</button></div>
+</section>
+
+<section class="game-panel" id="panel-memory" hidden>
+<h2>Jeu de mémoire</h2>
+<p class="muted">Retrouve les six paires. Appuie sur deux cartes pour les retourner.</p>
+<p id="memoryStats" class="status" role="status" aria-live="polite">Coups : 0 · Paires : 0/6</p>
+<div id="memoryGrid" class="memory-grid" aria-label="Cartes du jeu de mémoire"></div>
+<div class="actions"><button id="memoryReset" type="button">Nouvelle partie</button></div>
+</section>
+
+<section class="game-panel" id="panel-reflex" hidden>
+<h2>Test de réflexes</h2>
+<p class="muted">Appuie sur le bouton pour démarrer. Attends qu'il devienne vert, puis clique le plus vite possible. Ne clique pas trop tôt !</p>
+<button id="reflexButton" class="reflex-button" type="button">Démarrer le test</button>
+<p id="reflexResult" class="status" role="status" aria-live="polite">Ton meilleur temps sur cet appareil : <strong id="reflexBest">—</strong></p>
+</section>
+
+<footer>Les résultats restent sur cet appareil. Bonne partie sur Ébénénews 72.8 !</footer>
+</main>
+
+<script>
+const tabs = Array.from(document.querySelectorAll("[data-game]"));
+const panels = {
+  quiz: document.getElementById("panel-quiz"),
+  memory: document.getElementById("panel-memory"),
+  reflex: document.getElementById("panel-reflex")
+};
+function showGame(name) {
+  tabs.forEach(function(tab) {
+    tab.setAttribute("aria-pressed", String(tab.dataset.game === name));
+  });
+  Object.keys(panels).forEach(function(key) {
+    panels[key].hidden = key !== name;
+  });
+}
+tabs.forEach(function(tab) {
+  tab.addEventListener("click", function() { showGame(tab.dataset.game); });
+});
+
+/* Quiz */
+const quizData = [
+  {q:"Quel nombre figure dans le nom Ébénénews 72.8 ?",a:["72,8","88,2","92,4","107,7"],c:0,why:"La radio s'appelle bien Ébénénews 72.8."},
+  {q:"Quelle planète est surnommée la planète rouge ?",a:["Vénus","Mars","Jupiter","Neptune"],c:1,why:"La surface de Mars contient beaucoup d'oxyde de fer."},
+  {q:"Quel animal est souvent associé à la sagesse ?",a:["Le hibou","Le dauphin","Le cheval","Le lapin"],c:0,why:"Le hibou est un symbole classique de sagesse."},
+  {q:"À quoi sert un AutoDJ dans une radio ?",a:["À dessiner un logo","À automatiser la diffusion","À envoyer des SMS","À régler le volume du téléphone"],c:1,why:"Un AutoDJ enchaîne les contenus programmés sans intervention permanente."},
+  {q:"Quel format est couramment utilisé pour diffuser de l'audio sur le web ?",a:["MP3","PNG","CSV","TXT"],c:0,why:"Le MP3 est un format audio largement pris en charge."}
+];
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+const quizQuestion = document.getElementById("quizQuestion");
+const quizCount = document.getElementById("quizCount");
+const quizText = document.getElementById("quizText");
+const quizAnswers = document.getElementById("quizAnswers");
+const quizFeedback = document.getElementById("quizFeedback");
+const quizResult = document.getElementById("quizResult");
+const quizStart = document.getElementById("quizStart");
+const quizNext = document.getElementById("quizNext");
+
+function startQuiz() {
+  quizIndex = 0;
+  quizScore = 0;
+  quizAnswered = false;
+  quizResult.textContent = "";
+  quizQuestion.hidden = false;
+  quizStart.hidden = true;
+  renderQuestion();
+}
+function renderQuestion() {
+  const item = quizData[quizIndex];
+  quizAnswered = false;
+  quizCount.textContent = "Question " + (quizIndex + 1) + " / " + quizData.length;
+  quizText.textContent = item.q;
+  quizFeedback.textContent = "";
+  quizNext.hidden = true;
+  quizAnswers.replaceChildren();
+  item.a.forEach(function(answer, index) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "answer";
+    button.textContent = answer;
+    button.addEventListener("click", function() { chooseAnswer(index); });
+    quizAnswers.appendChild(button);
+  });
+}
+function chooseAnswer(choice) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const item = quizData[quizIndex];
+  if (choice === item.c) {
+    quizScore += 1;
+    quizFeedback.textContent = "Bonne réponse ! " + item.why;
+  } else {
+    quizFeedback.textContent = "Pas tout à fait. " + item.why;
+  }
+  Array.from(quizAnswers.children).forEach(function(button, index) {
+    button.disabled = true;
+    if (index === item.c) button.classList.add("good");
+    else if (index === choice) button.classList.add("bad");
+  });
+  quizNext.textContent = quizIndex === quizData.length - 1 ? "Voir mon score" : "Question suivante";
+  quizNext.hidden = false;
+}
+quizNext.addEventListener("click", function() {
+  if (!quizAnswered) return;
+  quizIndex += 1;
+  if (quizIndex < quizData.length) {
+    renderQuestion();
+    return;
+  }
+  quizQuestion.hidden = true;
+  quizResult.textContent = "Terminé : " + quizScore + " bonne(s) réponse(s) sur " + quizData.length + ".";
+  quizStart.textContent = "Rejouer";
+  quizStart.hidden = false;
+});
+quizStart.addEventListener("click", startQuiz);
+
+/* Memory */
+const symbols = ["🥷","🐉","🦊","⚡","🎧","🍀"];
+const memoryGrid = document.getElementById("memoryGrid");
+const memoryStats = document.getElementById("memoryStats");
+let memoryDeck = [];
+let memoryButtons = [];
+let firstCard = null;
+let memoryLocked = false;
+let memoryMoves = 0;
+let memoryPairs = 0;
+let memoryTimer = null;
+
+function shuffle(items) {
+  const result = items.slice();
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = result[i];
+    result[i] = result[j];
+    result[j] = temp;
+  }
+  return result;
+}
+function updateMemoryStats() {
+  memoryStats.textContent = "Coups : " + memoryMoves + " · Paires : " + memoryPairs + "/6";
+}
+function newMemoryGame() {
+  if (memoryTimer !== null) clearTimeout(memoryTimer);
+  memoryTimer = null;
+  memoryDeck = shuffle(symbols.concat(symbols)).map(function(symbol) {
+    return {symbol:symbol,open:false,matched:false};
+  });
+  memoryButtons = [];
+  firstCard = null;
+  memoryLocked = false;
+  memoryMoves = 0;
+  memoryPairs = 0;
+  memoryGrid.replaceChildren();
+  memoryDeck.forEach(function(card, index) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "memory-card";
+    button.textContent = "?";
+    button.setAttribute("aria-label", "Carte masquée " + (index + 1));
+    button.setAttribute("aria-pressed", "false");
+    button.addEventListener("click", function() { flipCard(index); });
+    memoryGrid.appendChild(button);
+    memoryButtons.push(button);
+  });
+  updateMemoryStats();
+}
+function flipCard(index) {
+  const card = memoryDeck[index];
+  if (memoryLocked || !card || card.open || card.matched) return;
+  card.open = true;
+  const button = memoryButtons[index];
+  button.textContent = card.symbol;
+  button.classList.add("is-open");
+  button.setAttribute("aria-label", "Carte révélée " + card.symbol);
+  button.setAttribute("aria-pressed", "true");
+  if (firstCard === null) {
+    firstCard = index;
+    return;
+  }
+  memoryMoves += 1;
+  const firstIndex = firstCard;
+  const first = memoryDeck[firstIndex];
+  if (first.symbol === card.symbol) {
+    first.matched = true;
+    card.matched = true;
+    memoryButtons[firstIndex].classList.add("is-matched");
+    button.classList.add("is-matched");
+    memoryButtons[firstIndex].disabled = true;
+    button.disabled = true;
+    memoryPairs += 1;
+    firstCard = null;
+    updateMemoryStats();
+    if (memoryPairs === symbols.length) memoryStats.textContent += " · Bravo, toutes les paires sont trouvées !";
+    return;
+  }
+  memoryLocked = true;
+  updateMemoryStats();
+  memoryTimer = setTimeout(function() {
+    [firstIndex,index].forEach(function(cardIndex) {
+      memoryDeck[cardIndex].open = false;
+      memoryButtons[cardIndex].textContent = "?";
+      memoryButtons[cardIndex].classList.remove("is-open");
+      memoryButtons[cardIndex].setAttribute("aria-label", "Carte masquée " + (cardIndex + 1));
+      memoryButtons[cardIndex].setAttribute("aria-pressed", "false");
+    });
+    firstCard = null;
+    memoryLocked = false;
+    memoryTimer = null;
+  }, 750);
+}
+document.getElementById("memoryReset").addEventListener("click", newMemoryGame);
+newMemoryGame();
+
+/* Reflex */
+const reflexButton = document.getElementById("reflexButton");
+const reflexResult = document.getElementById("reflexResult");
+const reflexBest = document.getElementById("reflexBest");
+const bestKey = "ebenenews-reflex-best-v1";
+let reflexState = "idle";
+let reflexTimer = null;
+let readyAt = 0;
+
+function loadBest() {
+  try {
+    const best = Number(localStorage.getItem(bestKey));
+    reflexBest.textContent = Number.isFinite(best) && best > 0 ? best + " ms" : "—";
+  } catch (error) {
+    reflexBest.textContent = "—";
+  }
+}
+function startReflex() {
+  if (reflexTimer !== null) clearTimeout(reflexTimer);
+  reflexTimer = null;
+  reflexState = "waiting";
+  reflexButton.classList.remove("ready");
+  reflexButton.textContent = "Attends le vert…";
+  reflexResult.textContent = "Ne clique pas encore !";
+  const delay = 1300 + Math.random() * 2700;
+  reflexTimer = setTimeout(function() {
+    reflexState = "ready";
+    readyAt = performance.now();
+    reflexButton.classList.add("ready");
+    reflexButton.textContent = "CLIQUE MAINTENANT !";
+    reflexResult.textContent = "Maintenant !";
+    reflexTimer = null;
+  }, delay);
+}
+reflexButton.addEventListener("click", function() {
+  if (reflexState === "idle" || reflexState === "done") {
+    startReflex();
+    return;
+  }
+  if (reflexState === "waiting") {
+    if (reflexTimer !== null) clearTimeout(reflexTimer);
+    reflexTimer = null;
+    reflexState = "done";
+    reflexButton.classList.remove("ready");
+    reflexButton.textContent = "Recommencer";
+    reflexResult.textContent = "Trop tôt ! Attends que le bouton passe au vert.";
+    return;
+  }
+  if (reflexState === "ready") {
+    const elapsed = Math.round(performance.now() - readyAt);
+    reflexState = "done";
+    reflexButton.classList.remove("ready");
+    reflexButton.textContent = "Recommencer";
+    let best = 0;
+    try { best = Number(localStorage.getItem(bestKey)) || 0; } catch (error) {}
+    if (!best || elapsed < best) {
+      try { localStorage.setItem(bestKey, String(elapsed)); } catch (error) {}
+      loadBest();
+      reflexResult.textContent = "Ton temps : " + elapsed + " ms. Nouveau record sur cet appareil !";
+    } else {
+      reflexResult.textContent = "Ton temps : " + elapsed + " ms.";
+    }
+  }
+});
+loadBest();
+</script>
+</body>
+</html>
