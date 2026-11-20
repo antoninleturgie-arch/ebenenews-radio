@@ -9,6 +9,11 @@ Site radio en français, publié avec GitHub Pages.
 - Interface adaptée aux écrans mobiles.
 - Le lecteur n'essaie pas de lancer automatiquement le son.
 
+## Jeux
+- Page `jeux.html` avec quiz, jeu de mémoire et test de réflexes.
+- Commandes tactiles et clavier, sans compte ni service externe.
+- Le meilleur temps du test de réflexes est conservé localement sur l'appareil.
+
 ## Mise en ligne GitHub Pages
 Le dépôt doit être publié depuis la branche `main` à la racine. Site : https://antoninleturgie-arch.github.io/ebenenews-radio/
 
