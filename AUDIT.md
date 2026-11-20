@@ -1,3 +1,36 @@
+# Passage de maintenance — 20 novembre 2026
+
+## Changements de ce passage
+- Ajout de `jeux.html` avec trois jeux autonomes : quiz, mémoire et réflexes.
+- Ajout d'un lien vers les jeux dans l'en-tête de `radio.html`.
+- Documentation de la page Jeux dans `README.md`.
+- Les jeux n'utilisent ni compte, ni API, ni bibliothèque externe. Le record de réflexes est stocké uniquement dans le navigateur.
+
+## État vérifié le 20 novembre 2026
+- Le dépôt GitHub est accessible et la branche principale est `main`. Les changements de ce passage ont été commités ; l'accès direct au site GitHub Pages a échoué depuis l'environnement de contrôle, donc la publication visible en ligne reste à confirmer.
+- Val Town `/api/health` répond 200 et annonce 2 morceaux.
+- `/api/content` répond 200 : 2 morceaux, 0 programme et 0 annonce.
+- `/api/radio-state` répond 200 et indique le morceau courant.
+- Les deux URL audio référencées par la bibliothèque répondent en HEAD 200 avec `audio/mpeg`. Le serveur annonce toutefois `Accept-Ranges: none`, ce qui limite la recherche à l'intérieur d'un morceau.
+- `/admin` renvoie une interface HTML (200), mais l'interface vérifie le rôle via `/api/account/me`. Sans session, cette API renvoie 401. Les API `/api/admin/online` et `/api/admin/users` renvoient 403 sans session administrateur.
+- Aucune connexion réussie au compte administrateur n'a été testée. Le secret configuré dans l'environnement est destiné aux réponses administrateur du chat ; il ne prouve pas à lui seul que l'authentification du compte fonctionne. Aucune valeur secrète n'a été lue.
+- Le chat public sur `live-chat.ts` contient 5 messages au moment du contrôle, tandis que `/api/chat` sur `main.ts` en contient 0. La page publique et le tableau de bord semblent utiliser deux espaces de chat distincts : ne pas fusionner les données sans audit et sauvegarde.
+- La branche Val Town `author-portal-dev` contient des fichiers Auteur/Audio/Sync plus récents, mais reste séparée de `main`. Elle n'a pas été fusionnée.
+- `/api/admin/stats` renvoie 404. Les écoutes, auditeurs uniques et durées ne sont donc pas encore mesurés par un endpoint de statistiques dédié. Le compteur `/api/admin/online` correspond aux personnes connectées à un compte, pas nécessairement aux auditeurs de la radio.
+- Le flux permanent n'est toujours pas configuré dans `radio-config.js` ; la playlist du navigateur ne constitue pas un flux radio commun 24 h/24.
+
+## Priorités de reprise
+1. **P0 — Flux permanent :** installer/configurer un serveur de diffusion (AzuraCast ou Icecast + Liquidsoap), puis tester le flux avant de renseigner son URL publique.
+2. **P1 — Chat :** auditer les deux espaces de chat et les rapprocher sans perdre les messages ni affaiblir les contrôles administrateur.
+3. **P1 — Auteur :** examiner `author-portal-dev` et ses contrôles d'accès, puis préparer une intégration progressive et réversible.
+4. **P1 — Statistiques :** instrumenter les démarrages et durées d'écoute avec des sessions pseudonymisées ; distinguer visites, comptes connectés et auditeurs.
+5. **P2 — Administration :** ajouter un tableau de bord fondé sur des mesures réelles ; le point d'entrée statistiques actuel renvoie 404.
+6. **P2 — Programmes/annonces :** compléter la programmation et vérifier leur affichage public.
+7. **P2 — Audio :** étudier le support des requêtes HTTP Range pour permettre la recherche dans les morceaux.
+8. **P3 — Jeux :** vérifier la page sur GitHub Pages, puis enrichir la collection après tests mobile/ordinateur.
+
+---
+
 # Audit technique — Ébénénews 72.8
 
 ## État vérifié le 19 novembre 2026
