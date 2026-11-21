@@ -35,6 +35,7 @@ jobs:
           grep -q 'streamUrl' radio-config.js
       - name: Vérifier la syntaxe JavaScript
         run: |
+          set -e
           node --check radio-config.js
           node --check server-bridge.js
           python3 - <<'PY'
@@ -45,10 +46,11 @@ jobs:
 
           for filename in ("radio.html", "jeux.html"):
               source = Path(filename).read_text(encoding="utf-8")
-              scripts = re.findall(r"<script\\b[^>]*>(.*?)</script>", source, re.I | re.S)
-              for number, script in enumerate(scripts):
-                  if not script.strip():
-                      continue
+              scripts = re.findall(r"<script[^>]*>(.*?)</script>", source, re.I | re.S)
+              inline_scripts = [script for script in scripts if script.strip()]
+              if not inline_scripts:
+                  raise SystemExit(f"Aucun script intégré trouvé dans {filename}")
+              for number, script in enumerate(inline_scripts):
                   path = Path(tempfile.gettempdir()) / f"ebenenews-{filename}-{number}.js"
                   path.write_text(script, encoding="utf-8")
                   subprocess.run(["node", "--check", str(path)], check=True)
@@ -56,7 +58,7 @@ jobs:
           PY
       - name: Empêcher le retour de l'ancienne authentification locale
         run: |
-          if grep -RniE 'enneBUsers|enneBCurrentUser|EBENE-ADMIN-72\\.8|enneBServerAdminToken' --include='*.html' --include='*.js' .; then
+          if grep -RniE 'enneBUsers|enneBCurrentUser|EBENE-ADMIN-72[.]8|enneBServerAdminToken' --include='*.html' --include='*.js' .; then
             echo "Ancien mécanisme de comptes ou d'administration côté navigateur détecté."
             exit 1
           fi
