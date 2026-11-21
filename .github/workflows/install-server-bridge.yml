@@ -1,22 +1,16 @@
-name: Install Val Town bridge
+name: Archive — Ancienne installation du pont serveur
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+
 permissions:
-  contents: write
+  contents: read
+
 jobs:
-  install:
+  archived:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install bridge
+      - name: Information
         run: |
-          if ! grep -q 'server-bridge.js' index.html; then
-            sed -i 's#</body>#<script src="./server-bridge.js"></script></body>#' index.html
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add index.html
-            git commit -m "Connect GitHub Pages to Val Town server"
-            git push
-          fi
+          echo "Ce workflow historique est neutralisé."
+          echo "Les vérifications actuelles sont exécutées par .github/workflows/validate.yml."
+          echo "Aucun fichier du site ni aucune donnée de compte ne sont modifiés."

@@ -1,5 +1,4 @@
 name: Vérifier le site radio
-
 on:
   push:
     branches: [main]
@@ -16,18 +15,49 @@ jobs:
     steps:
       - name: Récupérer le dépôt
         uses: actions/checkout@v4
-      - name: Vérifier les fichiers essentiels
+      - name: Vérifier les pages et éléments essentiels
         run: |
+          set -e
           test -s index.html
           test -s radio.html
+          test -s jeux.html
           test -s radio-config.js
           test -s streaming/README.md
           test -s SECURITY.md
           grep -q 'setupDirectStream' radio.html
+          grep -q 'id="player"' radio.html
+          grep -q 'id="autoRadioButton"' radio.html
+          grep -q 'href="./jeux.html"' radio.html
+          grep -q 'id="panel-quiz"' jeux.html
+          grep -q 'id="panel-memory"' jeux.html
+          grep -q 'id="panel-reflex"' jeux.html
+          grep -q 'RADIO_CONFIG' radio-config.js
           grep -q 'streamUrl' radio-config.js
-      - name: Rechercher des identifiants de démonstration dans le code client
+      - name: Vérifier la syntaxe JavaScript
         run: |
-          if grep -RniE 'admin[[:space:]]*/[[:space:]]*ebene72|password[[:space:]]*=[[:space:]]*["]ebene72' --include='*.html' --include='*.js' --include='*.json' .; then
-            echo "Identifiant de démonstration détecté : supprimer et faire tourner les identifiants exposés."
+          node --check radio-config.js
+          node --check server-bridge.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import subprocess
+          import tempfile
+
+          for filename in ("radio.html", "jeux.html"):
+              source = Path(filename).read_text(encoding="utf-8")
+              scripts = re.findall(r"<script\\b[^>]*>(.*?)</script>", source, re.I | re.S)
+              for number, script in enumerate(scripts):
+                  if not script.strip():
+                      continue
+                  path = Path(tempfile.gettempdir()) / f"ebenenews-{filename}-{number}.js"
+                  path.write_text(script, encoding="utf-8")
+                  subprocess.run(["node", "--check", str(path)], check=True)
+          print("Syntaxe des scripts intégrés vérifiée.")
+          PY
+      - name: Empêcher le retour de l'ancienne authentification locale
+        run: |
+          if grep -RniE 'enneBUsers|enneBCurrentUser|EBENE-ADMIN-72\\.8|enneBServerAdminToken' --include='*.html' --include='*.js' .; then
+            echo "Ancien mécanisme de comptes ou d'administration côté navigateur détecté."
             exit 1
           fi
+          echo "Aucun ancien mécanisme de compte local détecté."

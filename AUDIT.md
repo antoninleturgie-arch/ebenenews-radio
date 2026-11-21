@@ -1,3 +1,44 @@
+# Passage de maintenance — 21 novembre 2026
+
+## Changements de ce passage
+- Neutralisation de 7 anciens workflows GitHub Actions qui tentaient encore de modifier `index.html`, désormais simple page de redirection vers `radio.html`.
+- Ces anciens workflows sont maintenant manuels et sans permission d'écriture. Ils ne peuvent plus réintroduire les anciens comptes locaux du navigateur ni les anciens codes d'administration côté client.
+- Renforcement de `.github/workflows/validate.yml` : vérification des pages Radio/Jeux, des éléments attendus, des marqueurs d'authentification locale obsolète et de la syntaxe JavaScript.
+- Aucun code Val Town, compte, mot de passe ou secret n'a été modifié ou lu.
+
+## État vérifié le 21 novembre 2026
+- Le dépôt est accessible, branche principale `main`, dernier commit avant ce passage : `ca8c9665819dc3d0ca16c737d6f1cce9940ce468`.
+- Le site public répond en HTTP 200 pour la page d'accueil, `radio.html` et `jeux.html`. La page d'accueil redirige vers la radio. La page Radio contient le lien Jeux ; la page Jeux présente le quiz, le jeu de mémoire et le test de réflexes.
+- Le dernier déploiement GitHub Pages observé avant ce passage avait réussi. Le déploiement déclenché par ce nouveau commit doit encore être confirmé.
+- Val Town `ninjantox/ebenenews-radio` : branche `main` version 156 ; endpoint principal actif.
+- `/api/health` répond 200 et annonce 2 morceaux. `/api/content` répond 200 : 2 morceaux, 0 programme, 0 annonce. `/api/radio-state` répond 200 et indique le morceau courant.
+- `/api/chat` sur le backend principal contient 0 message au moment du contrôle ; le endpoint séparé `live-chat.ts` contient 5 messages. Les deux chats restent distincts : aucune fusion ni suppression n'a été tentée.
+- `/api/admin/stats` répond 404 : les statistiques d'écoute ne sont pas encore implémentées.
+- Sans session, `/api/account/me` répond 401 et les API `/api/admin/online` et `/api/admin/users` répondent 403. La page `/admin` répond 200 car elle sert une coquille HTML ; les données restent derrière les API protégées. Une connexion réussie au compte administrateur n'a pas été testée.
+- La clé d'environnement destinée aux réponses administrateur du chat est présente et non vide selon ses métadonnées ; sa valeur n'a pas été consultée. Elle ne prouve pas à elle seule que le mot de passe du compte administrateur fonctionne.
+- La branche Val Town `author-portal-dev` reste séparée de `main` (version 59, 10 fichiers). Sa page Auteur répond 200 et propose connexion, demande de compte et dépôt de morceaux ; elle ne présente pas encore de statistiques d'écoute. Sans session, ses API de dépôt répondent 403 (`author_required`), l'API de file d'attente répond 403 (`admin_required`) et `/api/account/me` répond 401. Aucun merge n'a été tenté.
+- Les deux URL audio de la bibliothèque répondent en HTTP 200 avec `audio/mpeg` via le service audio de la branche de développement. Le serveur annonce `Accept-Ranges: none` ; la recherche dans les morceaux n'est pas disponible.
+- `radio-config.js` garde `streamUrl` vide : aucun flux permanent 24 h/24 n'est actuellement configuré.
+- Le fichier historique `musique1.mp3` du dépôt ne fait que 2 octets et n'est pas un fichier audio exploitable ; il n'est pas référencé par la bibliothèque Val Town actuelle. Il n'a pas été supprimé.
+
+## Automatisations GitHub
+- Le workflow historique `Repair Ébénénews radio` échouait car il cherchait l'ancien lecteur dans `index.html`, alors que le lecteur actuel se trouve dans `radio.html`.
+- Plusieurs autres anciens workflows modifiaient également `index.html` et certains contenaient des mécanismes de compte local ou des codes d'administration côté navigateur. Ils ont été rendus manuels et sans écriture.
+- Le workflow `validate.yml` reste le contrôle automatique sur push et pull request. Les workflows de déploiement Pages n'ont pas été désactivés.
+- Les anciens commits restent dans l'historique Git ; aucune réécriture d'historique n'a été faite.
+
+## Priorités de reprise
+1. **P0 — Flux permanent :** installer/configurer AzuraCast ou Icecast + Liquidsoap sur un serveur toujours allumé ; ne renseigner l'URL publique qu'après un test depuis un autre réseau.
+2. **P1 — Statistiques :** créer une mesure serveur des démarrages et durées d'écoute, sessions pseudonymisées et titres joués ; distinguer visites, comptes connectés et auditeurs.
+3. **P1 — Administration :** ajouter un endpoint de statistiques réel et un tableau de bord fondé uniquement sur les mesures disponibles ; continuer à vérifier les API protégées sans lire de secret.
+4. **P1 — Chat :** rapprocher les deux espaces après sauvegarde et cartographie des données, sans perdre les 5 messages du chat public.
+5. **P1 — Auteur :** comparer les schémas et dépendances de `author-portal-dev` avec `main`, puis intégrer progressivement les fonctions de dépôt et de validation ; ajouter les statistiques par auteur uniquement après instrumentation.
+6. **P2 — Audio :** étudier les requêtes HTTP Range et les tests de lecture sur téléphone/ordinateur.
+7. **P2 — Programmes/annonces :** compléter les contenus et vérifier leur affichage public.
+8. **P3 — Jeux :** tester les interactions dans de vrais navigateurs mobile et ordinateur, puis enrichir la collection.
+
+---
+
 # Passage de maintenance — 20 novembre 2026
 
 ## Changements de ce passage
