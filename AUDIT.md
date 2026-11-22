@@ -12,7 +12,7 @@
 - GitHub Pages répond HTTP 200 pour l'accueil, `radio.html`, `jeux.html` et `author-studio.html`. Une requête isolée sur l'accueil a renvoyé 503, puis le nouvel essai a répondu 200 ; aucune panne persistante n'a été constatée.
 - La page publique contient les accès Jeux et Studio des auteurs. La page Studio est disponible, mais son texte précise que le micro est seulement contrôlé localement : aucun son n'est envoyé à l'antenne tant que le transport audio n'est pas raccordé.
 - `radio-config.js` conserve `streamUrl` vide. Il n'existe donc toujours pas de flux audio public permanent configuré.
-- Val Town `ninjantox/ebenenews-radio`, branche `main`, version 179 après la fusion de sécurité : `/api/health` répond 200 et annonce 2 morceaux ; `/api/content` répond 200 avec 2 morceaux, 0 programme et 1 annonce RSS automatique ; `/api/radio-state` répond 200 et indique le mode musique.
+- Val Town `ninjantox/ebenenews-radio`, branche `main`, version 180 (fichier `server.ts` version 179 après la fusion de sécurité) : `/api/health` répond 200 et annonce 2 morceaux ; `/api/content` répond 200 avec 2 morceaux, 0 programme et 1 annonce RSS automatique ; `/api/radio-state` répond 200 et indique le mode musique.
 - Les deux chats sont toujours séparés : `main.ts /api/chat` renvoie 0 message, tandis que `live-chat.ts` renvoie 7 messages. Aucune fusion ni suppression n'a été faite.
 - Sans session, `/api/account/me` répond 401 ; les API d'administration testées répondent 403. La page `/admin` sert une coquille HTML en 200, mais les données restent derrière les API protégées.
 - `/api/admin/stats` répond 403 sans session : l'existence et les chiffres de ce tableau de bord ne peuvent donc pas être confirmés sans connexion administrateur.
