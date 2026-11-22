@@ -120,7 +120,7 @@ async function load(){
   music=Array.isArray(d.music)?d.music.filter(m=>m&&typeof m.url==='string'&&m.url.trim()):[];
   render();
   const arr=Array.isArray(d.announcements)?d.announcements:[];
-  newsBulletinItems=arr.filter(x=>x&&typeof x.text==='string'&&x.text.trim()).slice(0,5).map(x=>x.text.trim());
+  newsBulletinItems=arr.filter(x=>x&&typeof x.text==='string'&&x.text.trim()&&(x.kind==='auto-news'||x.source==='Le Monde')).slice(0,5).map(x=>x.text.trim());
   document.getElementById('newsStatus').textContent=newsBulletinItems.length?newsBulletinItems.length+' actualité(s) prête(s) à être lue(s).':'Aucune actualité disponible pour le moment.';
   const a=document.getElementById('announcements');
   a.innerHTML=arr.length?arr.map(x=>'<div class="item"><span>'+esc(x.text||'')+'</span><small class="muted">'+esc(x.date||'')+'</small></div>').join(''):'<div class="empty">Aucune annonce pour le moment.</div>';
