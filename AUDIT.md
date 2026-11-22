@@ -13,6 +13,7 @@
 - La page publique contient les accès Jeux et Studio des auteurs. La page Studio est disponible, mais son texte précise que le micro est seulement contrôlé localement : aucun son n'est envoyé à l'antenne tant que le transport audio n'est pas raccordé.
 - `radio-config.js` conserve `streamUrl` vide. Il n'existe donc toujours pas de flux audio public permanent configuré.
 - Val Town `ninjantox/ebenenews-radio`, branche `main`, version 179 après la fusion de sécurité : `/api/health` répond 200 et annonce 2 morceaux ; `/api/content` répond 200 avec 2 morceaux, 0 programme et 1 annonce RSS automatique ; `/api/radio-state` répond 200 et indique le mode musique.
+- Les deux chats sont toujours séparés : `main.ts /api/chat` renvoie 0 message, tandis que `live-chat.ts` renvoie 7 messages. Aucune fusion ni suppression n'a été faite.
 - Sans session, `/api/account/me` répond 401 ; les API d'administration testées répondent 403. La page `/admin` sert une coquille HTML en 200, mais les données restent derrière les API protégées.
 - `/api/admin/stats` répond 403 sans session : l'existence et les chiffres de ce tableau de bord ne peuvent donc pas être confirmés sans connexion administrateur.
 - La connexion réussie du compte propriétaire n'a pas été testée : aucun identifiant ni mot de passe n'a été fourni pour un test réel. Une variable d'environnement dédiée aux réponses administrateur du chat est renseignée selon ses métadonnées, mais cela ne prouve pas que le mot de passe du compte administrateur fonctionne. Sa valeur n'a pas été consultée.
