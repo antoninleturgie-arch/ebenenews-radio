@@ -22,7 +22,7 @@
 </section>
 <div class="grid">
 <section class="card"><h2>Lecteur audio</h2><div id="now" class="muted" aria-live="polite">Chargement de la bibliothèque…</div><audio id="player" preload="none"></audio><div class="controls"><button id="autoRadioButton" type="button">▶ Démarrer la radio</button></div><div class="controls"><button id="prev" disabled>⏮ Précédent</button><button id="play" disabled>▶ Lecture</button><button id="next" class="alt" disabled>Suivant ⏭</button></div><div id="status" class="status" role="status">Connexion au serveur radio…</div><div id="audioNotice" class="notice" hidden></div></section>
-<section class="card"><h2>Annonces</h2><div id="announcements" class="list"><div class="empty">Chargement des annonces…</div></div></section>
+<section class="card"><h2>Journal parlé</h2><p class="muted">Les actualités RSS sont lues à voix haute sur cet appareil.</p><div class="controls"><button id="newsSpeak" type="button">▶ Écouter le journal</button><button id="newsStop" class="alt" type="button">■ Arrêter</button></div><div id="newsStatus" class="status" role="status">En attente des actualités.</div><h2>Annonces</h2><div id="announcements" class="list"><div class="empty">Chargement des annonces…</div></div></section>
 </div>
 <section class="card" style="margin-top:16px"><h2>Programme musical</h2><div id="music" class="list"><div class="empty">Chargement de la bibliothèque…</div></div></section>
 <section class="card host-panel" id="hostSection" aria-labelledby="hostTitle">
@@ -93,7 +93,7 @@ const now=document.getElementById('now');
 const status=document.getElementById('status');
 const audioNotice=document.getElementById('audioNotice');
 const controls=['prev','play','next'].map(id=>document.getElementById(id));
-let music=[],index=-1,autoRadio=false,firstRadioIntro=true;
+let music=[],index=-1,autoRadio=false,firstRadioIntro=true,newsBulletinItems=[],tracksSinceNews=0;
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function setControls(){controls.forEach(b=>b.disabled=music.length===0)}
 function render(){
@@ -120,6 +120,8 @@ async function load(){
   music=Array.isArray(d.music)?d.music.filter(m=>m&&typeof m.url==='string'&&m.url.trim()):[];
   render();
   const arr=Array.isArray(d.announcements)?d.announcements:[];
+  newsBulletinItems=arr.filter(x=>x&&typeof x.text==='string'&&x.text.trim()).slice(0,5).map(x=>x.text.trim());
+  document.getElementById('newsStatus').textContent=newsBulletinItems.length?newsBulletinItems.length+' actualité(s) prête(s) à être lue(s).':'Aucune actualité disponible pour le moment.';
   const a=document.getElementById('announcements');
   a.innerHTML=arr.length?arr.map(x=>'<div class="item"><span>'+esc(x.text||'')+'</span><small class="muted">'+esc(x.date||'')+'</small></div>').join(''):'<div class="empty">Aucune annonce pour le moment.</div>';
   status.textContent=music.length?'Bibliothèque chargée. Choisis un morceau pour démarrer.':'Serveur connecté, mais aucun morceau audio utilisable n’est publié.';
@@ -136,8 +138,24 @@ document.getElementById('next').addEventListener('click',()=>music.length&&playI
 document.getElementById('prev').addEventListener('click',()=>music.length&&playIndex((index-1+music.length)%music.length));
 player.addEventListener('pause',()=>{document.getElementById('play').textContent='▶ Lecture'});
 player.addEventListener('play',()=>{document.getElementById('play').textContent='⏸ Pause'});
-player.addEventListener('ended',()=>{if(autoRadio&&music.length)playIndex((index+1)%music.length)});
+player.addEventListener('ended',()=>{if(!autoRadio||!music.length)return;tracksSinceNews++;if(tracksSinceNews>=3&&newsBulletinItems.length){tracksSinceNews=0;speakNewsBulletin(true)}else playIndex((index+1)%music.length)});
 player.addEventListener('error',()=>{if(player.src){status.textContent='Le fichier audio sélectionné ne peut pas être lu.';audioNotice.textContent='Vérifie le lien et le contenu du fichier audio sur le serveur.';audioNotice.hidden=false}});
+
+// Journal parlé automatique côté auditeur : actualités publiées par le flux RSS.
+function speakNewsBulletin(resumeRadio=false){
+ if(!newsBulletinItems.length){document.getElementById('newsStatus').textContent='Aucune actualité RSS à lire.';if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length);return}
+ if(!('speechSynthesis' in window)){document.getElementById('newsStatus').textContent='La lecture vocale n’est pas prise en charge par ce navigateur.';if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length);return}
+ window.speechSynthesis.cancel();
+ const text='Bonjour à toutes et à tous. Voici le journal d’Ébénénews 72.8. '+newsBulletinItems.map((s,i)=>'Information '+(i+1)+'. '+s).join(' ')+' C’était votre journal. Restez à l’écoute d’Ébénénews 72.8.';
+ const u=new SpeechSynthesisUtterance(text);u.lang='fr-FR';u.rate=.94;u.pitch=.95;
+ const voices=window.speechSynthesis.getVoices();u.voice=voices.find(v=>/^fr(-|_)/i.test(v.lang))||null;
+ document.getElementById('newsStatus').textContent='Journal en cours de lecture sur cet appareil.';
+ u.onend=()=>{document.getElementById('newsStatus').textContent='Journal terminé.';if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length)};
+ u.onerror=()=>{document.getElementById('newsStatus').textContent='Erreur de synthèse vocale.';if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length)};
+ window.speechSynthesis.speak(u);
+}
+document.getElementById('newsSpeak').addEventListener('click',()=>speakNewsBulletin(false));
+document.getElementById('newsStop').addEventListener('click',()=>{if('speechSynthesis'in window)window.speechSynthesis.cancel();document.getElementById('newsStatus').textContent='Lecture arrêtée.';});
 
 // Animateur intelligent local : interventions manuelles, jamais d'AutoDJ.
 const hostVoice=document.getElementById('hostVoice');
