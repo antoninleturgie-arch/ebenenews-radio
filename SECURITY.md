@@ -14,3 +14,11 @@
 ## État du dépôt
 
 La page GitHub Pages actuelle est une interface statique. Elle ne peut pas sécuriser à elle seule un compte administrateur, un chat public ou des statistiques globales. Ces fonctionnalités exigent un backend avec contrôles côté serveur. Ne pas afficher d'identifiants de démonstration sur le site public.
+
+
+## Hachage des mots de passe — Val Town
+
+- Les nouveaux mots de passe sont stockés avec PBKDF2-HMAC-SHA256 (600 000 itérations), un sel aléatoire de 16 octets et un résultat de 256 bits.
+- Les anciens hachages SHA-256 restent acceptés lors d'une connexion valide puis sont migrés automatiquement vers PBKDF2. Cette migration ne change pas le mot de passe de l'utilisateur.
+- Le SHA-256 historique reste réservé aux jetons de réinitialisation aléatoires à usage unique.
+- Les secrets d'environnement ne doivent jamais être lus, copiés ou publiés dans le dépôt, les journaux ou les rapports.
