@@ -250,5 +250,20 @@ document.getElementById('chatSend').addEventListener('click',sendChatMessage);
 document.getElementById('chatText').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();sendChatMessage()}});
 document.getElementById('adminToggle').addEventListener('click',()=>{adminPanel.hidden=!adminPanel.hidden;if(!localStorage.getItem('enneBClientToken'))document.getElementById('hostSection').scrollIntoView({behavior:'smooth',block:'center'})});
 document.getElementById('adminEntry').addEventListener('click',()=>{adminPanel.hidden=false;if(!localStorage.getItem('enneBClientToken'))document.getElementById('hostSection').scrollIntoView({behavior:'smooth',block:'center'});else document.getElementById('chatSection').scrollIntoView({behavior:'smooth',block:'start'})});
+
 refreshChat();setInterval(refreshChat,5000);
+
+// Statistiques d'écoute : identifiant aléatoire temporaire, aucun nom ni adresse IP stockés.
+const listenSessionKey='ebeneListenSession';
+let listenSessionId=sessionStorage.getItem(listenSessionKey);
+if(!listenSessionId){listenSessionId=crypto.randomUUID?crypto.randomUUID():'ebene-'+Date.now()+'-'+Math.random().toString(36).slice(2);sessionStorage.setItem(listenSessionKey,listenSessionId)}
+async function pingListening(){
+ const directPlaying=!!(directPlayer.src&&!directPlayer.paused);
+ const libraryPlaying=!!(player.src&&!player.paused);
+ const playing=directPlaying||libraryPlaying;
+ const track=directPlaying?'Flux direct Ébénénews':(music[index]?.name||'');
+ try{await fetch(VAL_BASE+'/api/listener/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:listenSessionId,playing,track})})}catch(e){}
+}
+[player,directPlayer].forEach(a=>{a.addEventListener('play',pingListening);a.addEventListener('pause',pingListening);a.addEventListener('ended',pingListening)});
+pingListening();setInterval(pingListening,30000);
 </script></body></html>
