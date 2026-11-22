@@ -6,10 +6,10 @@
 - Les anciens hachages SHA-256 restent vérifiables : au prochain login réussi, ils sont remplacés par un hachage PBKDF2 sans changer le mot de passe de l'utilisateur. La mise à jour SQL est conditionnelle à l'ancien hachage.
 - Le SHA-256 historique est conservé uniquement pour les jetons de réinitialisation à forte entropie ; il n'est plus utilisé pour stocker les nouveaux mots de passe.
 - Ajout de `password-hash.test.ts` : le test crée deux comptes techniques temporaires, vérifie un login PBKDF2, le rejet d'un mauvais mot de passe et la migration d'un ancien hachage, puis supprime les comptes et sessions de test.
-- Test exécuté sur `main` : **PASS**. Aucun mot de passe réel, compte existant ou secret n'a été modifié ou lu.
+- Test exécuté sur `main` : **PASS**. Le contrôle SQL final ne trouve aucun compte de test résiduel. Aucun mot de passe réel, compte existant ou secret n'a été modifié ou lu.
 
 ## Vérifications du site et du backend
-- GitHub Pages répond HTTP 200 pour l'accueil, `radio.html`, `jeux.html` et `author-studio.html`.
+- GitHub Pages répond HTTP 200 pour l'accueil, `radio.html`, `jeux.html` et `author-studio.html`. Une requête isolée sur l'accueil a renvoyé 503, puis le nouvel essai a répondu 200 ; aucune panne persistante n'a été constatée.
 - La page publique contient les accès Jeux et Studio des auteurs. La page Studio est disponible, mais son texte précise que le micro est seulement contrôlé localement : aucun son n'est envoyé à l'antenne tant que le transport audio n'est pas raccordé.
 - `radio-config.js` conserve `streamUrl` vide. Il n'existe donc toujours pas de flux audio public permanent configuré.
 - Val Town `ninjantox/ebenenews-radio`, branche `main`, version 179 après la fusion de sécurité : `/api/health` répond 200 et annonce 2 morceaux ; `/api/content` répond 200 avec 2 morceaux, 0 programme et 1 annonce RSS automatique ; `/api/radio-state` répond 200 et indique le mode musique.
