@@ -1,3 +1,42 @@
+# Passage de maintenance — 22 novembre 2026
+
+## Amélioration de sécurité réellement intégrée
+- Renforcement du stockage des mots de passe dans Val Town `server.ts`, fusionné de la branche `password-hash-hardening` vers `main` (version Val Town 179).
+- Les nouveaux mots de passe et ceux définis après une réinitialisation sont désormais hachés avec PBKDF2-HMAC-SHA256, 600 000 itérations, sel aléatoire de 16 octets et résultat de 256 bits.
+- Les anciens hachages SHA-256 restent vérifiables : au prochain login réussi, ils sont remplacés par un hachage PBKDF2 sans changer le mot de passe de l'utilisateur. La mise à jour SQL est conditionnelle à l'ancien hachage.
+- Le SHA-256 historique est conservé uniquement pour les jetons de réinitialisation à forte entropie ; il n'est plus utilisé pour stocker les nouveaux mots de passe.
+- Ajout de `password-hash.test.ts` : le test crée deux comptes techniques temporaires, vérifie un login PBKDF2, le rejet d'un mauvais mot de passe et la migration d'un ancien hachage, puis supprime les comptes et sessions de test.
+- Test exécuté sur `main` : **PASS**. Aucun mot de passe réel, compte existant ou secret n'a été modifié ou lu.
+
+## Vérifications du site et du backend
+- GitHub Pages répond HTTP 200 pour l'accueil, `radio.html`, `jeux.html` et `author-studio.html`.
+- La page publique contient les accès Jeux et Studio des auteurs. La page Studio est disponible, mais son texte précise que le micro est seulement contrôlé localement : aucun son n'est envoyé à l'antenne tant que le transport audio n'est pas raccordé.
+- `radio-config.js` conserve `streamUrl` vide. Il n'existe donc toujours pas de flux audio public permanent configuré.
+- Val Town `ninjantox/ebenenews-radio`, branche `main`, version 179 après la fusion de sécurité : `/api/health` répond 200 et annonce 2 morceaux ; `/api/content` répond 200 avec 2 morceaux, 0 programme et 1 annonce RSS automatique ; `/api/radio-state` répond 200 et indique le mode musique.
+- Sans session, `/api/account/me` répond 401 ; les API d'administration testées répondent 403. La page `/admin` sert une coquille HTML en 200, mais les données restent derrière les API protégées.
+- `/api/admin/stats` répond 403 sans session : l'existence et les chiffres de ce tableau de bord ne peuvent donc pas être confirmés sans connexion administrateur.
+- La connexion réussie du compte propriétaire n'a pas été testée : aucun identifiant ni mot de passe n'a été fourni pour un test réel. Une variable d'environnement dédiée aux réponses administrateur du chat est renseignée selon ses métadonnées, mais cela ne prouve pas que le mot de passe du compte administrateur fonctionne. Sa valeur n'a pas été consultée.
+- Le programme `schedule.ts` est actif avec un intervalle de 15 minutes. Quatre exécutions observées sur la dernière heure ont réussi ; les journaux indiquent qu'aucune annonce programmée n'était en attente et affichent un avertissement de dépréciation Node concernant `punycode`.
+- Le moteur radio met à jour l'état et le planning, mais cela ne crée pas un flux audio continu. Le direct 24 h/24 et le transport micro restent bloqués par l'absence d'un hébergeur Icecast/AzuraCast.
+
+## Mesures d'audience disponibles
+- Les écoutes audio, auditeurs uniques et durées globales ne sont toujours pas mesurés de façon fiable côté serveur.
+- La présence des comptes connectés n'est pas équivalente aux auditeurs radio.
+- Les compteurs affichés dans le Studio auteur sont indicatifs et ne prouvent pas que le micro est reçu par les auditeurs.
+- Aucun chiffre de visites ou d'écoutes globales n'est inventé dans cet audit.
+
+## Priorités de reprise
+1. **P0 — Flux permanent :** choisir/déployer un hébergeur radio toujours allumé, obtenir l'URL publique du flux et tester depuis un réseau extérieur avant de renseigner `radio-config.js`.
+2. **P1 — Statistiques réelles :** instrumenter les démarrages et durées d'écoute côté serveur avec des identifiants de session pseudonymisés ; distinguer visites, comptes connectés et auditeurs.
+3. **P1 — Administration :** après une connexion réelle autorisée du propriétaire, vérifier le tableau de bord et les chiffres ; ne pas utiliser le secret du chat comme mot de passe de compte.
+4. **P1 — Studio/Auteur :** vérifier les permissions auteur et administrateur, puis raccorder le micro au vrai serveur de diffusion ; intégrer la branche `author-portal-dev` seulement après comparaison des schémas et sauvegarde.
+5. **P1 — Chat :** rapprocher les espaces de discussion après cartographie et sauvegarde des messages, sans perte de données.
+6. **P2 — Programmes :** créer une programmation réelle et gérer les annonces avec une distinction claire entre flashs RSS et annonces personnelles.
+7. **P2 — Lecteur et jeux :** tester les interactions sur appareils réels et améliorer le lecteur après installation du flux.
+8. **P3 — Maintenance :** identifier l'origine de l'avertissement `punycode` avant toute mise à jour de dépendance.
+
+---
+
 # Passage de maintenance — 21 novembre 2026
 
 ## Changements de ce passage
