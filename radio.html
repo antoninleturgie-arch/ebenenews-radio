@@ -54,10 +54,7 @@
 <button id="chatSend" type="button">Envoyer le message</button>
 </div>
 <div class="controls"><button id="adminToggle" type="button" class="alt">Mode administrateur</button></div>
-<div id="adminPanel" hidden class="chat-form">
-<label for="adminPassword">Mot de passe administrateur</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Mot de passe admin">
-<p class="muted">Le mot de passe est vérifié côté serveur et n’est pas enregistré sur cette page.</p>
-</div>
+<div id="adminPanel" hidden class="chat-form"><p class="muted">Les réponses du chat utilisent le même compte administrateur que l’espace Animateur ci-dessus. Connecte-toi ici pour répondre.</p></div>
 <h3>Messages récents</h3><div id="chatMessages" class="list"><div class="empty">Chargement des messages…</div></div>
 <p class="muted">Les messages publics sont visibles par tous. N’y publie pas d’informations personnelles.</p>
 </section>
@@ -146,13 +143,13 @@ const hostVoice=document.getElementById('hostVoice');
 const hostScript=document.getElementById('hostScript');
 const hostStatus=document.getElementById('hostStatus');
 const hostAuth=document.getElementById('hostAuth'),hostPrivate=document.getElementById('hostPrivate');
-const HOST_TOKEN_KEY='enneBHostToken';
+const HOST_TOKEN_KEY='enneBClientToken';
 let hostToken=localStorage.getItem(HOST_TOKEN_KEY)||'',hostUser=null;
-const AUTHOR_API='https://ninjantox--01a1ef2ee433773a9b3ef7ff7fe30723.web.val.run';
-async function hostApi(path,opts={}){const headers={...(opts.headers||{})};if(hostToken)headers.Authorization='Bearer '+hostToken;const r=await fetch(AUTHOR_API+path,{...opts,headers});let d={};try{d=await r.json()}catch{}return{r,d}}
-function setHostAccess(user){hostUser=user;const allowed=!!user&&user.role==='author';hostAuth.hidden=allowed;hostPrivate.hidden=!allowed;if(allowed){document.getElementById('hostWho').textContent='Connecté comme animateur : '+(user.name||'Animateur');hostStatus.textContent='Espace animateur déverrouillé.'}else{document.getElementById('hostLoginStatus').textContent=user?'Ce compte ne possède pas le rôle animateur.':'Connecte-toi avec un compte animateur validé.';hostStatus.textContent='L’animateur automatique assure les présentations publiques.'}}
-async function checkHostSession(){if(!hostToken)return;const{r,d}=await hostApi('/api/account/me');if(r.ok&&d.user?.role==='author')setHostAccess(d.user);else{hostToken='';localStorage.removeItem(HOST_TOKEN_KEY);setHostAccess(null)}}
-document.getElementById('hostLogin').addEventListener('click',async()=>{const email=document.getElementById('hostEmail').value.trim(),password=document.getElementById('hostPassword').value;const msg=document.getElementById('hostLoginStatus');if(!email||!password){msg.textContent='Entre ton adresse e-mail et ton mot de passe.';return}msg.textContent='Connexion…';try{const{r,d}=await hostApi('/api/author/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});if(!r.ok){msg.textContent=d.error==='pending_approval'?'Compte en attente de validation.':d.error||'Connexion refusée.';return}hostToken=d.token;localStorage.setItem(HOST_TOKEN_KEY,hostToken);const me=await hostApi('/api/account/me');if(!me.r.ok||me.d.user?.role!=='author'){hostToken='';localStorage.removeItem(HOST_TOKEN_KEY);setHostAccess(null);msg.textContent='Seuls les comptes animateur validés peuvent faire des annonces personnelles.';return}setHostAccess(me.d.user)}catch(e){msg.textContent='Serveur de connexion indisponible.'}});
+function hasHostRole(user){return !!user&&(user.role==='admin'||user.role==='author')}
+async function hostApi(path,opts={}){const headers={...(opts.headers||{})};if(hostToken)headers.Authorization='Bearer '+hostToken;const r=await fetch(VAL_BASE+path,{...opts,headers});let d={};try{d=await r.json()}catch{}return{r,d}}
+function setHostAccess(user){hostUser=user;const allowed=hasHostRole(user);hostAuth.hidden=allowed;hostPrivate.hidden=!allowed;if(allowed){document.getElementById('hostWho').textContent='Connecté comme '+(user.role==='admin'?'administrateur':'animateur')+' : '+(user.name||'Animateur');hostStatus.textContent='Espace animateur déverrouillé.'}else{document.getElementById('hostLoginStatus').textContent='Connecte-toi avec ton compte Ébénénews administrateur ou animateur.';hostStatus.textContent='L’animateur automatique assure les présentations publiques.'}}
+async function checkHostSession(){if(!hostToken)return;const{r,d}=await hostApi('/api/account/me');if(r.ok&&hasHostRole(d.user))setHostAccess(d.user);else{hostToken='';localStorage.removeItem(HOST_TOKEN_KEY);setHostAccess(null)}}
+document.getElementById('hostLogin').addEventListener('click',async()=>{const email=document.getElementById('hostEmail').value.trim(),password=document.getElementById('hostPassword').value;const msg=document.getElementById('hostLoginStatus');if(!email||!password){msg.textContent='Entre ton adresse e-mail et ton mot de passe.';return}msg.textContent='Connexion…';try{const{r,d}=await hostApi('/api/account/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});if(!r.ok){msg.textContent='Identifiants incorrects.';return}hostToken=d.token;localStorage.setItem(HOST_TOKEN_KEY,hostToken);const me=await hostApi('/api/account/me');if(!me.r.ok||!hasHostRole(me.d.user)){hostToken='';localStorage.removeItem(HOST_TOKEN_KEY);setHostAccess(null);msg.textContent='Ce compte doit être administrateur ou animateur validé.';return}setHostAccess(me.d.user)}catch(e){msg.textContent='Serveur de connexion indisponible.'}});
 document.getElementById('hostLogout').addEventListener('click',async()=>{try{await hostApi('/api/account/logout',{method:'POST'})}catch(e){}hostToken='';localStorage.removeItem(HOST_TOKEN_KEY);setHostAccess(null)});
 checkHostSession();
 let hostVoices=[];
@@ -166,7 +163,7 @@ function makeHostLine(trackOnly=false){
  const selected=music[index]||null;
  const title=selected?.name||'la musique d’Ébénénews';
  const announcements=[...document.querySelectorAll('#announcements .item span')].map(x=>x.textContent.trim()).filter(Boolean);
- const custom=hostUser?.role==='author'?document.getElementById('hostTopic').value.trim():'';
+ const custom=hasHostRole(hostUser)?document.getElementById('hostTopic').value.trim():'';
  const greetings=[
   'Bonjour à toutes et à tous, vous êtes bien sur Ébénénews 72.8 ! Ici votre animateur. Restez avec nous, la radio continue.',
   'Salut les auditeurs d’Ébénénews 72.8 ! Merci d’être à l’écoute. Installez-vous, on passe un bon moment ensemble.',
@@ -183,7 +180,7 @@ function makeHostLine(trackOnly=false){
  return greetings[Math.floor(Math.random()*greetings.length)]+' '+(selected?transitions[Math.floor(Math.random()*transitions.length)]:'La programmation est à découvrir dans le lecteur. Je vous retrouve très vite !');
 }
 function hostSpeak(trackOnly=false){
- const personal=document.getElementById('hostTopic')?.value.trim();if(personal&&!trackOnly&&hostUser?.role!=='author'){hostStatus.textContent='Annonce personnelle réservée aux animateurs.';return}
+ const personal=document.getElementById('hostTopic')?.value.trim();if(personal&&!trackOnly&&!hasHostRole(hostUser)){hostStatus.textContent='Annonce personnelle réservée aux animateurs et administrateurs connectés.';return}
  const line=makeHostLine(trackOnly);hostScript.textContent=line;
  if(!('speechSynthesis' in window)){hostStatus.textContent='Texte préparé. Active un navigateur compatible avec la synthèse vocale pour l’entendre.';return}
  window.speechSynthesis.cancel();
@@ -195,8 +192,8 @@ function hostSpeak(trackOnly=false){
  utterance.onerror=()=>hostStatus.textContent='La voix n’a pas pu démarrer. Vérifie les réglages audio du navigateur.';
  window.speechSynthesis.speak(utterance);
 }
-document.getElementById('hostSpeak').addEventListener('click',()=>{if(hostUser?.role!=='author'){hostStatus.textContent='Connexion animateur obligatoire.';return}const msg=document.getElementById('hostTopic').value.trim();if(!msg){hostStatus.textContent='Écris une annonce personnelle avant de prendre le micro.';return}hostSpeak(false)});
-document.getElementById('hostTrack').addEventListener('click',()=>{if(hostUser?.role!=='author'){hostStatus.textContent='Connexion animateur obligatoire.';return}hostSpeak(true)});
+document.getElementById('hostSpeak').addEventListener('click',()=>{if(!hasHostRole(hostUser)){hostStatus.textContent='Connexion obligatoire.';return}const msg=document.getElementById('hostTopic').value.trim();if(!msg){hostStatus.textContent='Écris une annonce personnelle avant de prendre le micro.';return}hostSpeak(false)});
+document.getElementById('hostTrack').addEventListener('click',()=>{if(!hasHostRole(hostUser)){hostStatus.textContent='Connexion obligatoire.';return}hostSpeak(true)});
 document.getElementById('hostStop').addEventListener('click',()=>{if('speechSynthesis' in window)window.speechSynthesis.cancel();hostStatus.textContent='Micro coupé.'});
 document.getElementById('autoRadioButton').addEventListener('click',()=>{const b=document.getElementById('autoRadioButton');if(autoRadio){autoRadio=false;player.pause();b.textContent='▶ Reprendre la radio';status.textContent='Radio en pause.';return}if(!music.length){status.textContent='Aucun morceau validé à diffuser.';return}autoRadio=true;firstRadioIntro=true;b.textContent='■ Arrêter la radio';playIndex(index>=0?index:0)});
 load();
@@ -238,18 +235,19 @@ async function sendChatMessage(){
  finally{chatBusy=false;document.getElementById('chatSend').disabled=false}
 }
 async function sendAdminReply(id){
- const input=chatMessages.querySelector('[data-reply-text="'+id+'"]');const text=input?.value.trim();const password=document.getElementById('adminPassword').value;
- if(!password){adminPanel.hidden=false;chatStatus.textContent='Entre le mot de passe administrateur pour répondre.';document.getElementById('adminPassword').focus();return}
+ const input=chatMessages.querySelector('[data-reply-text="'+id+'"]');const text=input?.value.trim();
+ const token=localStorage.getItem('enneBClientToken')||'';
+ if(!token){adminPanel.hidden=false;document.getElementById('hostSection').scrollIntoView({behavior:'smooth',block:'center'});chatStatus.textContent='Connecte-toi dans l’espace Animateur avec ton compte administrateur.';return}
  if(!text){chatStatus.textContent='Écris la réponse avant de l’envoyer.';input?.focus();return}
  try{
-  const r=await fetch(CHAT_API,{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Password':password},body:JSON.stringify({action:'reply',replyTo:id,text})});
+  const r=await fetch(CHAT_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({action:'reply',replyTo:id,text})});
   const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'Réponse impossible');
   chatStatus.textContent='Réponse administrateur publiée.';await refreshChat();
  }catch(e){chatStatus.textContent=e.message||'Impossible de publier la réponse.'}
 }
 document.getElementById('chatSend').addEventListener('click',sendChatMessage);
 document.getElementById('chatText').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();sendChatMessage()}});
-document.getElementById('adminToggle').addEventListener('click',()=>{adminPanel.hidden=!adminPanel.hidden;if(!adminPanel.hidden)document.getElementById('adminPassword').focus()});
-document.getElementById('adminEntry').addEventListener('click',()=>{adminPanel.hidden=false;document.getElementById('chatSection').scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('adminPassword').focus()});
+document.getElementById('adminToggle').addEventListener('click',()=>{adminPanel.hidden=!adminPanel.hidden;if(!localStorage.getItem('enneBClientToken'))document.getElementById('hostSection').scrollIntoView({behavior:'smooth',block:'center'})});
+document.getElementById('adminEntry').addEventListener('click',()=>{adminPanel.hidden=false;if(!localStorage.getItem('enneBClientToken'))document.getElementById('hostSection').scrollIntoView({behavior:'smooth',block:'center'});else document.getElementById('chatSection').scrollIntoView({behavior:'smooth',block:'start'})});
 refreshChat();setInterval(refreshChat,5000);
 </script></body></html>
