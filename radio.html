@@ -223,11 +223,12 @@ function loadHostVoices(){
  hostVoice.innerHTML='<option value="">Voix française par défaut</option>'+hostVoices.map((v,i)=>({v,i})).filter(x=>/^fr/i.test(x.v.lang)).map(x=>'<option value="'+x.i+'">'+esc(x.v.name)+' ('+esc(x.v.lang)+')</option>').join('');
 }
 if('speechSynthesis' in window){loadHostVoices();window.speechSynthesis.onvoiceschanged=loadHostVoices}
-let lastHostLine='';
-function variedLine(lines){
- const available=lines.filter(line=>line!==lastHostLine);
+const lastHostLines={};
+function variedLine(lines,group='default'){
+ const previous=lastHostLines[group]||'';
+ const available=lines.filter(line=>line!==previous);
  const line=(available.length?available:lines)[Math.floor(Math.random()*(available.length||lines.length))];
- lastHostLine=line;return line;
+ lastHostLines[group]=line;return line;
 }
 function makeHostLine(trackOnly=false){
  const selected=music[index]||null;
@@ -260,11 +261,11 @@ function makeHostLine(trackOnly=false){
   'Une actualité à retenir : ',
   'Voici une information qui mérite votre attention : '
  ];
- if(custom)return variedLine(['Sur Ébénénews 72.8, votre animateur vous informe : '+custom,'Un message spécial pour les auditeurs d’Ébénénews 72.8 : '+custom]);
- if(trackOnly)return selected?variedLine(transitions):'Aucun titre n’est disponible pour le moment.';
- const greeting=variedLine(greetings);
- const bulletin=announcements.length?' '+variedLine(openings)+announcements[Math.floor(Math.random()*announcements.length)]+'.':'';
- const transition=selected?' '+variedLine(transitions):' La programmation continue sur Ébénénews 72.8.';
+ if(custom)return variedLine(['Sur Ébénénews 72.8, votre animateur vous informe : '+custom,'Un message spécial pour les auditeurs d’Ébénénews 72.8 : '+custom],'custom');
+ if(trackOnly)return selected?variedLine(transitions,'transitions'):'Aucun titre n’est disponible pour le moment.';
+ const greeting=variedLine(greetings,'greetings');
+ const bulletin=announcements.length?' '+variedLine(openings,'openings')+announcements[Math.floor(Math.random()*announcements.length)]+'.':'';
+ const transition=selected?' '+variedLine(transitions,'transitions'):' La programmation continue sur Ébénénews 72.8.';
  return greeting+bulletin+transition;
 }
 function hostSpeak(trackOnly=false){
