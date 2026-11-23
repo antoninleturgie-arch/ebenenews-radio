@@ -27,6 +27,14 @@
  <div id="listenerRewardStatus" class="status">Chargement des points…</div>
  <div id="listenerRewardFeatures" class="list"></div>
 </section>
+<section class="card" id="listenerShop" style="margin-top:16px">
+ <h2>🛍️ Boutique des auditeurs</h2>
+ <p class="muted">Dépense tes points d’écoute contre des éléments exclusifs. Les achats et le solde disponible sont conservés sur cet appareil.</p>
+ <p><strong>Solde disponible : <span id="listenerShopBalance" style="color:#d4af37">0</span> points</strong></p>
+ <div id="listenerShopStatus" class="status" aria-live="polite">Chargement de la boutique…</div>
+ <div id="listenerShopItems" class="list"></div>
+ <div id="listenerShopEquipped" class="notice" hidden></div>
+</section>
 <div class="grid">
 <section class="card"><h2>Lecteur audio</h2><div id="now" class="muted" aria-live="polite">Chargement de la bibliothèque…</div><audio id="player" preload="none"></audio><div class="controls"><button id="autoRadioButton" type="button">▶ Démarrer la radio</button></div><div class="controls"><button id="prev" disabled>⏮ Précédent</button><button id="play" disabled>▶ Lecture</button><button id="next" class="alt" disabled>Suivant ⏭</button></div><div id="status" class="status" role="status">Connexion au serveur radio…</div><div id="audioNotice" class="notice" hidden></div></section>
 <section class="card"><h2>Journal parlé</h2><p class="muted">Les actualités RSS sont lues à voix haute sur cet appareil.</p><div class="controls"><button id="newsSpeak" type="button">▶ Écouter le journal</button><button id="newsStop" class="alt" type="button">■ Arrêter</button></div><div id="newsStatus" class="status" role="status">En attente des actualités.</div><h2>Annonces</h2><div id="announcements" class="list"><div class="empty">Chargement des annonces…</div></div></section>
@@ -341,6 +349,60 @@ document.getElementById('adminEntry').addEventListener('click',()=>{adminPanel.h
 
 refreshChat();setInterval(refreshChat,5000);
 
+// Boutique : les points dépensés et les objets achetés sont conservés dans ce navigateur.
+const shopSpentKey='ebeneShopSpent';
+const shopOwnedKey='ebeneShopOwned';
+const shopActiveKey='ebeneShopActive';
+let shopSpent=Math.max(0,Number(localStorage.getItem(shopSpentKey)||0));
+let shopOwned=[];try{shopOwned=JSON.parse(localStorage.getItem(shopOwnedKey)||'[]')}catch{shopOwned=[]}
+let shopActive=localStorage.getItem(shopActiveKey)||'';
+const shopCatalog=[
+ {id:'gold-theme',name:'Thème Or',description:'Une apparence dorée exclusive pour la radio.',price:20,kind:'theme',value:'gold'},
+ {id:'violet-theme',name:'Thème Violet',description:'Une ambiance violette pour ton espace auditeur.',price:35,kind:'theme',value:'violet'},
+ {id:'vip-badge',name:'Badge Auditeur VIP',description:'Affiche ton statut VIP dans la boutique.',price:50,kind:'badge',value:'VIP'},
+ {id:'legend-badge',name:'Badge Légende 72.8',description:'Un badge spécial pour les grands soutiens de la radio.',price:90,kind:'badge',value:'LÉGENDE'}
+];
+function applyShopItem(){
+ const active=shopCatalog.find(x=>x.id===shopActive&&shopOwned.includes(x.id));
+ document.body.style.background=active?.kind==='theme'&&active.value==='violet'
+  ?'radial-gradient(circle at top,#29133d 0,#080808 42%,#050505 100%)'
+  :'radial-gradient(circle at top,#25200f 0,#080808 42%,#050505 100%)';
+ const box=document.getElementById('listenerShopEquipped');
+ if(box){box.hidden=!active;box.textContent=active?'Élément actif : '+active.name:''}
+}
+function renderShop(){
+ const balance=Math.max(0,listenerPoints-shopSpent);
+ const balanceEl=document.getElementById('listenerShopBalance');
+ const itemsEl=document.getElementById('listenerShopItems');
+ const statusEl=document.getElementById('listenerShopStatus');
+ if(!balanceEl||!itemsEl||!statusEl)return;
+ balanceEl.textContent=balance;
+ statusEl.textContent='Points gagnés : '+listenerPoints+' · Points dépensés : '+shopSpent;
+ itemsEl.innerHTML=shopCatalog.map(item=>{
+  const owned=shopOwned.includes(item.id),active=shopActive===item.id;
+  const action=owned
+   ?'<button type="button" class="alt" data-shop-equip="'+item.id+'" '+(active?'disabled':'')+'>'+(active?'Activé ✓':'Activer')+'</button>'
+   :'<button type="button" data-shop-buy="'+item.id+'" '+(balance<item.price?'disabled':'')+'>Acheter · '+item.price+' pts</button>';
+  return '<div class="item"><span><strong>'+esc(item.name)+'</strong><br><small class="muted">'+esc(item.description)+'</small></span><span>'+action+'</span></div>';
+ }).join('');
+ itemsEl.querySelectorAll('[data-shop-buy]').forEach(button=>button.addEventListener('click',()=>{
+  const item=shopCatalog.find(x=>x.id===button.dataset.shopBuy);if(!item||shopOwned.includes(item.id))return;
+  const current=Math.max(0,listenerPoints-shopSpent);
+  if(current<item.price){statusEl.textContent='Tu n’as pas assez de points pour cet achat.';return}
+  shopSpent+=item.price;shopOwned.push(item.id);shopActive=item.id;
+  localStorage.setItem(shopSpentKey,String(shopSpent));
+  localStorage.setItem(shopOwnedKey,JSON.stringify(shopOwned));
+  localStorage.setItem(shopActiveKey,shopActive);
+  applyShopItem();renderShop();statusEl.textContent=item.name+' acheté et activé !';
+ }));
+ itemsEl.querySelectorAll('[data-shop-equip]').forEach(button=>button.addEventListener('click',()=>{
+  const id=button.dataset.shopEquip;if(!shopOwned.includes(id))return;
+  shopActive=id;localStorage.setItem(shopActiveKey,shopActive);applyShopItem();renderShop();
+  statusEl.textContent='Élément activé.';
+ }));
+ applyShopItem();
+}
+
 // Points d’écoute : seule la lecture effective du flux direct est comptabilisée.
 const listenSessionKey='ebeneListenSession';
 let listenSessionId=localStorage.getItem(listenSessionKey);
@@ -353,6 +415,7 @@ function renderListenerRewards(){
  const featuresEl=document.getElementById('listenerRewardFeatures');
  if(!pointsEl||!statusEl||!featuresEl)return;
  pointsEl.textContent=listenerPoints+' point'+(listenerPoints>1?'s':'');
+ renderShop();
  const directPlaying=!!(directPlayer.src&&!directPlayer.paused&&!directPlayer.ended);
  statusEl.textContent=!directPlayer.src
   ?'Le flux direct n’est pas encore configuré : les points commenceront dès que le direct sera disponible.'
