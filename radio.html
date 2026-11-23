@@ -20,6 +20,13 @@
 <div id="directNotice" class="notice">Le flux permanent n'est pas encore configuré. Le site est prêt à recevoir l'URL du serveur dans <code>radio-config.js</code>. Voir le guide de diffusion.</div>
 <p><a href="./streaming/README.md" style="color:#d4af37">Guide d'installation du flux radio</a></p>
 </section>
+<section class="card" id="listenerRewards" style="margin-top:16px">
+ <h2>🏆 Points d’écoute</h2>
+ <p><strong id="listenerPoints" style="font-size:28px;color:#d4af37">0 point</strong></p>
+ <p class="muted">1 point toutes les 5 minutes d’écoute réelle du flux direct. Les morceaux choisis, les annonces, le chat et les autres pages ne rapportent aucun point.</p>
+ <div id="listenerRewardStatus" class="status">Chargement des points…</div>
+ <div id="listenerRewardFeatures" class="list"></div>
+</section>
 <div class="grid">
 <section class="card"><h2>Lecteur audio</h2><div id="now" class="muted" aria-live="polite">Chargement de la bibliothèque…</div><audio id="player" preload="none"></audio><div class="controls"><button id="autoRadioButton" type="button">▶ Démarrer la radio</button></div><div class="controls"><button id="prev" disabled>⏮ Précédent</button><button id="play" disabled>▶ Lecture</button><button id="next" class="alt" disabled>Suivant ⏭</button></div><div id="status" class="status" role="status">Connexion au serveur radio…</div><div id="audioNotice" class="notice" hidden></div></section>
 <section class="card"><h2>Journal parlé</h2><p class="muted">Les actualités RSS sont lues à voix haute sur cet appareil.</p><div class="controls"><button id="newsSpeak" type="button">▶ Écouter le journal</button><button id="newsStop" class="alt" type="button">■ Arrêter</button></div><div id="newsStatus" class="status" role="status">En attente des actualités.</div><h2>Annonces</h2><div id="announcements" class="list"><div class="empty">Chargement des annonces…</div></div></section>
@@ -99,7 +106,20 @@ function setControls(){controls.forEach(b=>b.disabled=music.length===0)}
 function render(){
  const box=document.getElementById('music');
  if(!music.length){box.innerHTML='<div class="empty">Aucun morceau validé n’est disponible pour le moment.</div>';setControls();return}
- box.innerHTML=music.map((m,i)=>'<div class="item" data-index="'+i+'"><span>'+esc(m.name||'Titre sans nom')+'</span><span class="muted">Programmation automatique</span></div>').join('');
+ const canChoose=listenerPoints>=10,canFavorite=listenerPoints>=25;
+ box.innerHTML=music.map((m,i)=>{
+  const favorite=favorites.has(String(m.id||m.url));
+  return '<div class="item" data-index="'+i+'"><span>'+esc(m.name||'Titre sans nom')+'</span><span class="muted">'+
+   (canChoose?'<button type="button" data-listen-choice="'+i+'">▶ Écouter ce titre</button>':'🔒 Choix à débloquer à 10 points')+
+   (canFavorite?( '<button type="button" class="alt" data-favorite="'+i+'">'+(favorite?'★ Favori':'☆ Favori')+'</button>'):'')+
+   '</span></div>';
+ }).join('');
+ box.querySelectorAll('[data-listen-choice]').forEach(b=>b.addEventListener('click',()=>playIndex(Number(b.dataset.listenChoice))));
+ box.querySelectorAll('[data-favorite]').forEach(b=>b.addEventListener('click',()=>{
+  const m=music[Number(b.dataset.favorite)];if(!m)return;
+  const key=String(m.id||m.url);if(favorites.has(key))favorites.delete(key);else favorites.add(key);
+  localStorage.setItem('ebeneListenerFavorites',JSON.stringify([...favorites]));render();
+ }));
  setControls();renderCurrent();
 }
 function renderCurrent(){document.querySelectorAll('#music .item').forEach((e,i)=>e.style.borderColor=i===index?'#d4af37':'#292929')}
@@ -145,13 +165,38 @@ player.addEventListener('error',()=>{if(player.src){status.textContent='Le fichi
 function speakNewsBulletin(resumeRadio=false){
  if(!newsBulletinItems.length){document.getElementById('newsStatus').textContent='Aucune actualité RSS à lire.';if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length);return}
  if(!('speechSynthesis' in window)){document.getElementById('newsStatus').textContent='La lecture vocale n’est pas prise en charge par ce navigateur.';if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length);return}
+ const resumeDirect=!!(directPlayer.src&&!directPlayer.paused);
+ const resumeLibrary=!!(player.src&&!player.paused);
+ if(resumeDirect)directPlayer.pause();
+ if(resumeLibrary)player.pause();
  window.speechSynthesis.cancel();
- const text='Bonjour à toutes et à tous. Voici le journal d’Ébénénews 72.8. '+newsBulletinItems.map((s,i)=>'Information '+(i+1)+'. '+s).join(' ')+' C’était votre journal. Restez à l’écoute d’Ébénénews 72.8.';
+ const openings=[
+  'Bonjour à toutes et à tous. Voici les dernières informations sur Ébénénews 72.8.',
+  'C’est l’heure de votre point actualité sur Ébénénews 72.8.',
+  'On fait une pause dans la programmation pour retrouver les nouvelles du jour.',
+  'Bienvenue dans le journal d’Ébénénews 72.8. Voici ce qu’il faut retenir.'
+ ];
+ const closings=[
+  'C’était votre journal. Merci de votre fidélité et bonne écoute.',
+  'Voilà pour les informations. On reprend la programmation sur Ébénénews 72.8.',
+  'Vous êtes à l’écoute d’Ébénénews 72.8. À très vite pour un nouveau point.',
+  'Merci d’avoir suivi ce journal. Restez avec nous.'
+ ];
+ const pick=a=>a[Math.floor(Math.random()*a.length)];
+ const text=pick(openings)+' '+newsBulletinItems.map((s,i)=>'Information '+(i+1)+'. '+s).join(' ')+' '+pick(closings);
  const u=new SpeechSynthesisUtterance(text);u.lang='fr-FR';u.rate=.94;u.pitch=.95;
  const voices=window.speechSynthesis.getVoices();u.voice=voices.find(v=>/^fr(-|_)/i.test(v.lang))||null;
- document.getElementById('newsStatus').textContent='Journal en cours de lecture sur cet appareil.';
- u.onend=()=>{document.getElementById('newsStatus').textContent='Journal terminé.';if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length)};
- u.onerror=()=>{document.getElementById('newsStatus').textContent='Erreur de synthèse vocale.';if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length)};
+ document.getElementById('newsStatus').textContent='Journal en cours de lecture. La musique est mise en pause.';
+ const resume=()=>{
+  document.getElementById('newsStatus').textContent='Journal terminé.';
+  if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length);
+  else {
+   if(resumeLibrary)player.play().catch(()=>{});
+   if(resumeDirect)directPlayer.play().catch(()=>{});
+  }
+ };
+ u.onend=resume;
+ u.onerror=()=>{document.getElementById('newsStatus').textContent='Erreur de synthèse vocale.';if(resumeRadio&&autoRadio&&music.length)playIndex((index+1)%music.length);else{if(resumeLibrary)player.play().catch(()=>{});if(resumeDirect)directPlayer.play().catch(()=>{})}};
  window.speechSynthesis.speak(u);
 }
 document.getElementById('newsSpeak').addEventListener('click',()=>speakNewsBulletin(false));
@@ -178,25 +223,49 @@ function loadHostVoices(){
  hostVoice.innerHTML='<option value="">Voix française par défaut</option>'+hostVoices.map((v,i)=>({v,i})).filter(x=>/^fr/i.test(x.v.lang)).map(x=>'<option value="'+x.i+'">'+esc(x.v.name)+' ('+esc(x.v.lang)+')</option>').join('');
 }
 if('speechSynthesis' in window){loadHostVoices();window.speechSynthesis.onvoiceschanged=loadHostVoices}
+let lastHostLine='';
+function variedLine(lines){
+ const available=lines.filter(line=>line!==lastHostLine);
+ const line=(available.length?available:lines)[Math.floor(Math.random()*(available.length||lines.length))];
+ lastHostLine=line;return line;
+}
 function makeHostLine(trackOnly=false){
  const selected=music[index]||null;
  const title=selected?.name||'la musique d’Ébénénews';
  const announcements=[...document.querySelectorAll('#announcements .item span')].map(x=>x.textContent.trim()).filter(Boolean);
  const custom=hasHostRole(hostUser)?document.getElementById('hostTopic').value.trim():'';
  const greetings=[
-  'Bonjour à toutes et à tous, vous êtes bien sur Ébénénews 72.8 ! Ici votre animateur. Restez avec nous, la radio continue.',
-  'Salut les auditeurs d’Ébénénews 72.8 ! Merci d’être à l’écoute. Installez-vous, on passe un bon moment ensemble.',
-  'Bienvenue sur Ébénénews 72.8, votre rendez-vous radio. Merci de faire vivre l’antenne avec nous !'
+  'Salut à tous les auditeurs, vous êtes sur Ébénénews 72.8. Merci d’être avec nous !',
+  'Bienvenue sur votre radio Ébénénews 72.8. On est ensemble pour la suite du programme.',
+  'Un grand bonjour à celles et ceux qui nous écoutent. Vous êtes bien sur Ébénénews 72.8.',
+  'Ravi de vous retrouver sur Ébénénews 72.8. Gardez le son avec nous !',
+  'Vous êtes toujours sur Ébénénews 72.8. Installez-vous, la programmation continue.',
+  'Coucou aux auditeurs connectés ! Merci de faire vivre Ébénénews 72.8.',
+  'Nouvelle séquence sur Ébénénews 72.8. Restez dans le coin, la suite arrive.',
+  'La radio est avec vous ! Bienvenue sur Ébénénews 72.8.'
  ];
  const transitions=[
-  'On met à l’honneur le titre '+title+'. Merci à l’artiste et bonne écoute sur Ébénénews 72.8 !',
-  'Place à '+title+'. Vous êtes toujours sur Ébénénews 72.8, la radio qui vous accompagne.',
-  'Petit focus musical : '+title+'. Montez le son si vous le souhaitez, et bonne écoute !'
+  'On enchaîne avec '+title+'. Très bonne écoute à toutes et à tous !',
+  'Voici maintenant '+title+'. Profitez bien de ce moment musical.',
+  'Place à '+title+'. Merci de rester à l’écoute d’Ébénénews 72.8.',
+  'On change d’ambiance avec '+title+'. Montez le son si vous le souhaitez !',
+  'Votre prochain rendez-vous musical : '+title+'. Bonne écoute !',
+  'C’est le moment de retrouver '+title+'. On se retrouve juste après.',
+  'Une nouvelle piste arrive : '+title+'. Que la musique continue !',
+  'Et maintenant, laissons la place à '+title+'.'
  ];
- if(custom)return 'Sur Ébénénews 72.8, votre animateur vous informe : '+custom;
- if(trackOnly)return selected?transitions[Math.floor(Math.random()*transitions.length)]:'Aucun titre n’est sélectionné pour le moment. Choisis un morceau dans le lecteur, puis je pourrai le présenter.';
- if(announcements.length)return greetings[Math.floor(Math.random()*greetings.length)]+' À retenir : '+announcements[0]+'. '+(selected?transitions[Math.floor(Math.random()*transitions.length)]:'Restez à l’écoute !');
- return greetings[Math.floor(Math.random()*greetings.length)]+' '+(selected?transitions[Math.floor(Math.random()*transitions.length)]:'La programmation est à découvrir dans le lecteur. Je vous retrouve très vite !');
+ const openings=[
+  'Petite info à partager avec vous : ',
+  'À noter également pour aujourd’hui : ',
+  'Une actualité à retenir : ',
+  'Voici une information qui mérite votre attention : '
+ ];
+ if(custom)return variedLine(['Sur Ébénénews 72.8, votre animateur vous informe : '+custom,'Un message spécial pour les auditeurs d’Ébénénews 72.8 : '+custom]);
+ if(trackOnly)return selected?variedLine(transitions):'Aucun titre n’est disponible pour le moment.';
+ const greeting=variedLine(greetings);
+ const bulletin=announcements.length?' '+variedLine(openings)+announcements[Math.floor(Math.random()*announcements.length)]+'.':'';
+ const transition=selected?' '+variedLine(transitions):' La programmation continue sur Ébénénews 72.8.';
+ return greeting+bulletin+transition;
 }
 function hostSpeak(trackOnly=false){
  const personal=document.getElementById('hostTopic')?.value.trim();if(personal&&!trackOnly&&!hasHostRole(hostUser)){hostStatus.textContent='Annonce personnelle réservée aux animateurs et administrateurs connectés.';return}
@@ -271,17 +340,44 @@ document.getElementById('adminEntry').addEventListener('click',()=>{adminPanel.h
 
 refreshChat();setInterval(refreshChat,5000);
 
-// Statistiques d'écoute : identifiant aléatoire temporaire, aucun nom ni adresse IP stockés.
+// Points d’écoute : seule la lecture effective du flux direct est comptabilisée.
 const listenSessionKey='ebeneListenSession';
-let listenSessionId=sessionStorage.getItem(listenSessionKey);
-if(!listenSessionId){listenSessionId=crypto.randomUUID?crypto.randomUUID():'ebene-'+Date.now()+'-'+Math.random().toString(36).slice(2);sessionStorage.setItem(listenSessionKey,listenSessionId)}
-async function pingListening(){
- const directPlaying=!!(directPlayer.src&&!directPlayer.paused);
- const libraryPlaying=!!(player.src&&!player.paused);
- const playing=directPlaying||libraryPlaying;
- const track=directPlaying?'Flux direct Ébénénews':(music[index]?.name||'');
- try{await fetch(VAL_BASE+'/api/listener/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:listenSessionId,playing,track})})}catch(e){}
+let listenSessionId=localStorage.getItem(listenSessionKey);
+if(!listenSessionId){listenSessionId=crypto.randomUUID?crypto.randomUUID():'ebene-'+Date.now()+'-'+Math.random().toString(36).slice(2);localStorage.setItem(listenSessionKey,listenSessionId)}
+let listenerPoints=0,listenerSeconds=0;
+let favorites=new Set();try{favorites=new Set(JSON.parse(localStorage.getItem('ebeneListenerFavorites')||'[]'))}catch{}
+function renderListenerRewards(){
+ const pointsEl=document.getElementById('listenerPoints');
+ const statusEl=document.getElementById('listenerRewardStatus');
+ const featuresEl=document.getElementById('listenerRewardFeatures');
+ if(!pointsEl||!statusEl||!featuresEl)return;
+ pointsEl.textContent=listenerPoints+' point'+(listenerPoints>1?'s':'');
+ const directPlaying=!!(directPlayer.src&&!directPlayer.paused&&!directPlayer.ended);
+ statusEl.textContent=!directPlayer.src
+  ?'Le flux direct n’est pas encore configuré : les points commenceront dès que le direct sera disponible.'
+  :directPlaying?'Écoute du direct détectée : les points sont en cours de calcul.':'Mets le flux direct en lecture pour gagner des points. Les autres activités ne comptent pas.';
+ const features=[
+  {at:10,name:'Choisir un morceau à écouter',description:'Débloque l’écoute à la demande des titres de la bibliothèque.'},
+  {at:25,name:'Enregistrer ses favoris',description:'Débloque les favoris personnels sur cet appareil.'}
+ ];
+ featuresEl.innerHTML=features.map(f=>'<div class="item"><span><strong>'+esc(f.name)+'</strong><br><small class="muted">'+esc(f.description)+'</small></span><span>'+(listenerPoints>=f.at?'<strong style="color:#d4af37">Débloqué ✓</strong>':'🔒 '+listenerPoints+'/'+f.at+' points')+'</span></div>').join('');
 }
-[player,directPlayer].forEach(a=>{a.addEventListener('play',pingListening);a.addEventListener('pause',pingListening);a.addEventListener('ended',pingListening)});
-pingListening();setInterval(pingListening,30000);
-</script></body></html>
+async function refreshListenerRewards(){
+ try{
+  const r=await fetch(api('/api/listener/rewards?sessionId='+encodeURIComponent(listenSessionId)),{cache:'no-store'});
+  if(!r.ok)return;
+  const d=await r.json();listenerPoints=Number(d.points||0);listenerSeconds=Number(d.listenedSeconds||0);
+  renderListenerRewards();render();
+ }catch(e){}
+}
+async function pingListening(){
+ const directPlaying=!!(directPlayer.src&&!directPlayer.paused&&!directPlayer.ended);
+ try{
+  const r=await fetch(VAL_BASE+'/api/listener/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:listenSessionId,playing:directPlaying,direct:directPlaying,track:directPlaying?'Flux direct Ébénénews':''})});
+  if(r.ok){const d=await r.json();listenerPoints=Number(d.points||listenerPoints);listenerSeconds=Number(d.listenedSeconds||listenerSeconds);renderListenerRewards();render()}
+ }catch(e){}
+}
+directPlayer.addEventListener('playing',pingListening);
+directPlayer.addEventListener('pause',pingListening);
+directPlayer.addEventListener('ended',pingListening);
+refreshListenerRewards();pingListening();setInterval(pingListening,30000);
