@@ -12,6 +12,7 @@
 - Workflow « Vérifier le site radio », exécution 46 : **success**.
 - Déploiement GitHub Pages, exécution 91 : **success**.
 - Le code de `radio.html` contient le bloc « Points d'écoute » : 1 point toutes les 5 minutes de lecture effective du flux direct. Les titres choisis, annonces, chat et autres pages ne rapportent pas de points.
+- Le commit `99245e11` ajoute cinq niveaux d'auditeur (Curieux, Auditeur, Habitué, Passionné, Légende 72.8) et une barre de progression. Ces niveaux restent à 0 tant que le flux direct n'est pas configuré et qu'aucune écoute réelle n'est comptée.
 - `radio-config.js` conserve `streamUrl: ""`. Le direct permanent n'est donc toujours pas disponible et les points de direct ne peuvent pas encore être gagnés.
 - Le code de `jeux.html` conserve les trois mini-jeux ; le Studio Auteur est présent dans `author-studio.html`. Les interactions réelles sur appareils mobiles et ordinateurs n'ont pas été testées dans un navigateur pendant ce passage.
 
