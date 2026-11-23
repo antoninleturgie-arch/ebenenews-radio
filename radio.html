@@ -357,11 +357,23 @@ function renderListenerRewards(){
  statusEl.textContent=!directPlayer.src
   ?'Le flux direct n’est pas encore configuré : les points commenceront dès que le direct sera disponible.'
   :directPlaying?'Écoute du direct détectée : les points sont en cours de calcul.':'Mets le flux direct en lecture pour gagner des points. Les autres activités ne comptent pas.';
+ const levels=[
+  {at:0,name:'Curieux',description:'Tu découvres Ébénénews.'},
+  {at:10,name:'Auditeur',description:'Tu fais tes premiers pas dans la communauté.'},
+  {at:25,name:'Habitué',description:'Tu reviens régulièrement écouter la radio.'},
+  {at:50,name:'Passionné',description:'Tu fais partie des auditeurs fidèles.'},
+  {at:100,name:'Légende 72.8',description:'Un auditeur exceptionnel d’Ébénénews.'}
+ ];
+ let levelIndex=0;
+ levels.forEach((level,i)=>{if(listenerPoints>=level.at)levelIndex=i});
+ const current=levels[levelIndex],next=levels[levelIndex+1];
+ const progress=next?Math.max(0,Math.min(100,((listenerPoints-current.at)/(next.at-current.at))*100)):100;
+ const levelCard='<div class="item" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px"><strong>⭐ Niveau '+(levelIndex+1)+' · '+esc(current.name)+'</strong><strong style="color:#d4af37">'+listenerPoints+' pts</strong></div><p class="muted">'+esc(current.description)+'</p><div style="height:9px;background:#333;border-radius:99px;overflow:hidden"><div style="height:100%;width:'+progress+'%;background:#d4af37;border-radius:99px"></div></div><small class="muted">'+(next?(next.at-listenerPoints)+' points avant le niveau '+(levelIndex+2)+' · '+esc(next.name):'Niveau maximum atteint !')+'</small></div>';
  const features=[
   {at:10,name:'Choisir un morceau à écouter',description:'Débloque l’écoute à la demande des titres de la bibliothèque.'},
   {at:25,name:'Enregistrer ses favoris',description:'Débloque les favoris personnels sur cet appareil.'}
  ];
- featuresEl.innerHTML=features.map(f=>'<div class="item"><span><strong>'+esc(f.name)+'</strong><br><small class="muted">'+esc(f.description)+'</small></span><span>'+(listenerPoints>=f.at?'<strong style="color:#d4af37">Débloqué ✓</strong>':'🔒 '+listenerPoints+'/'+f.at+' points')+'</span></div>').join('');
+ featuresEl.innerHTML=levelCard+features.map(f=>'<div class="item"><span><strong>'+esc(f.name)+'</strong><br><small class="muted">'+esc(f.description)+'</small></span><span>'+(listenerPoints>=f.at?'<strong style="color:#d4af37">Débloqué ✓</strong>':'🔒 '+listenerPoints+'/'+f.at+' points')+'</span></div>').join('');
 }
 async function refreshListenerRewards(){
  try{
