@@ -1,3 +1,54 @@
+# Passage de maintenance — 23 novembre 2026
+
+## Correction demandée du catalogue musical
+- Le titre « 月下の夜想曲 (Gekka no Yasōkyoku) — Malice Mizer » était encore présent dans la clé `music` de la base Val Town, malgré la demande précédente de retrait.
+- Retrait effectué de la playlist active par une mise à jour SQL ciblée. Les trois autres titres ont été conservés.
+- Avant modification, l'ancienne valeur complète de `music` a été archivée dans la table `content_history` (entrée 1). Cette sauvegarde permet une récupération si nécessaire.
+- Vérification après modification : `/api/content` répond 200 avec 3 titres ; `/api/health` répond 200 et annonce `musicCount: 3`.
+- Le fichier audio source, hébergé par un service média distinct, n'a pas été supprimé : seul son référencement dans la playlist publique a été retiré.
+
+## Vérifications GitHub et site
+- Dernier commit observé sur `main` : `9d561939` (« Rétablit la fermeture du document radio »), après les commits qui ajoutent les points d'écoute du direct et réduisent les répétitions de l'animateur.
+- Workflow « Vérifier le site radio », exécution 46 : **success**.
+- Déploiement GitHub Pages, exécution 91 : **success**.
+- Le code de `radio.html` contient le bloc « Points d'écoute » : 1 point toutes les 5 minutes de lecture effective du flux direct. Les titres choisis, annonces, chat et autres pages ne rapportent pas de points.
+- `radio-config.js` conserve `streamUrl: ""`. Le direct permanent n'est donc toujours pas disponible et les points de direct ne peuvent pas encore être gagnés.
+- Le code de `jeux.html` conserve les trois mini-jeux ; le Studio Auteur est présent dans `author-studio.html`. Les interactions réelles sur appareils mobiles et ordinateurs n'ont pas été testées dans un navigateur pendant ce passage.
+
+## État Val Town — branche main
+- Projet : `ninjantox/ebenenews-radio`, version de branche 183.
+- Fichiers principaux observés : `main.ts` v183, `server.ts` v179, `schedule.ts` v176, `live-chat.ts` v158, `broadcast-control.ts` v164.
+- `/api/health` : HTTP 200, mode musique, 3 titres.
+- `/api/content` : HTTP 200, 3 titres, 0 programme, 1 annonce RSS automatique.
+- Le planificateur `schedule.ts` est actif avec un intervalle de 15 minutes.
+- Les deux fichiers audio encore référencés n'ont pas été lus sur un navigateur ; aucun test d'écoute réelle n'a été réalisé.
+
+## Chat et statistiques
+- `main.ts /api/chat` renvoie actuellement une liste vide.
+- `live-chat.ts /api/chat` renvoie 10 messages ; la table `radio_live_messages` contient également 10 lignes. Les deux interfaces ne présentent donc pas encore le même fil.
+- `radio_listener_sessions` contient 8 enregistrements ; aucun n'était marqué en lecture dans les deux dernières minutes lors du contrôle. Ce total historique ne représente pas des auditeurs en direct.
+- `radio_listener_rewards` contient 3 sessions de récompense, mais 0 point et 0 seconde comptabilisés.
+- `radio_author_listening` ne contient encore aucune donnée d'écoute auteur (0 auteur, 0 session, 0 seconde).
+- `author_submissions` contient 4 dépôts approuvés. La table de programmation est vide.
+- Aucun chiffre de visites ou d'audience globale ne peut être présenté comme fiable à ce stade.
+
+## Sécurité et tests
+- Sans session, `/api/account/me` répond 401 ; `/api/author/stats` et `/api/author/listening-stats` répondent 401 ; `/api/admin/stats` répond 403.
+- Le test `password-hash.test.ts` a été exécuté sur `main` : **PASS** pour création/login PBKDF2, rejet d'un mauvais mot de passe et migration d'un ancien hachage. Un avertissement de dépréciation Node concernant `punycode` reste présent.
+- Une variable d'environnement liée aux réponses administrateur du chat est renseignée selon ses métadonnées ; sa valeur n'a pas été lue. Elle ne prouve pas que la connexion au compte administrateur fonctionne.
+- Aucune connexion réussie au véritable compte administrateur n'a été testée. Aucun mot de passe ni secret n'a été consulté, changé ou révélé.
+
+## Priorités de reprise
+1. **P0 — Flux permanent :** installer un serveur Icecast/AzuraCast toujours allumé, obtenir et tester l'URL publique, puis renseigner `radio-config.js`.
+2. **P1 — Chat commun :** comparer les deux routes et réunir les fils sans perdre les 10 messages existants.
+3. **P1 — Mesure d'écoute :** faire compter uniquement la lecture réellement confirmée ; distinguer sessions, auditeurs en direct, points et écoutes de titres.
+4. **P1 — Espace Auteur :** vérifier les permissions et alimenter `radio_author_listening` par auteur et contenu avant d'afficher des statistiques.
+5. **P1 — Administration :** tester une connexion réelle autorisée du propriétaire et vérifier les données du tableau de bord, sans toucher au mot de passe.
+6. **P2 — Programmes et animation :** ajouter des programmes, fiabiliser les annonces et poursuivre les tests de l'animateur.
+7. **P3 — Qualité :** tester lecteur et jeux sur téléphone/ordinateur ; examiner l'avertissement `punycode`.
+
+---
+
 # Passage de maintenance — 22 novembre 2026
 
 ## Amélioration de sécurité réellement intégrée
