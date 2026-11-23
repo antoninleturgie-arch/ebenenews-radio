@@ -29,7 +29,7 @@
 - `radio_listener_sessions` contient 8 enregistrements ; aucun n'était marqué en lecture dans les deux dernières minutes lors du contrôle. Ce total historique ne représente pas des auditeurs en direct.
 - `radio_listener_rewards` contient 3 sessions de récompense, mais 0 point et 0 seconde comptabilisés.
 - `radio_author_listening` ne contient encore aucune donnée d'écoute auteur (0 auteur, 0 session, 0 seconde).
-- `author_submissions` contient 4 dépôts approuvés. La table de programmation est vide.
+- `author_submissions` contient 3 dépôts approuvés. La table de programmation est vide.
 - Aucun chiffre de visites ou d'audience globale ne peut être présenté comme fiable à ce stade.
 
 ## Sécurité et tests
