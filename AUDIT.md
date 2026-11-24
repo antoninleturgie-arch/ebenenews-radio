@@ -1,3 +1,58 @@
+# Passage de maintenance — 24 novembre 2026
+
+## Amélioration réellement intégrée : chat public et administration réunis
+- Le panneau Chat de `/admin` lisait auparavant `/api/chat`, qui utilise l'ancien stockage `content.chat`, alors que la page publique `radio.html` utilise le endpoint `live-chat.ts` et la table `radio_live_messages`.
+- Le panneau d'administration lit maintenant le même endpoint `live-chat.ts` que la radio publique. Les 10 messages présents dans `radio_live_messages` sont donc affichés dans les deux espaces.
+- Les réponses de l'administrateur sont envoyées à ce même endpoint avec le jeton de session existant. Le code serveur de `live-chat.ts` vérifie le jeton et le rôle `admin` avant d'ajouter une réponse.
+- Le panneau affiche un bouton « Répondre » uniquement sur les messages publics. La suppression depuis ce panneau a été retirée pour éviter d'appeler l'ancienne API de suppression sur le mauvais stockage.
+- Les anciens endpoints `/api/chat` et `/api/admin/chat` restent présents pour compatibilité. Leur historique n'a pas été migré ni supprimé : aucune ligne de chat n'a été effacée.
+
+## Tests effectués
+- Val Town `main.ts` : version 187 après les modifications.
+- `GET /admin` : HTTP 200 ; le HTML retourné contient le endpoint commun, le gestionnaire de réponse et le panneau « Chat des auditeurs » ; l'ancien chargement `j('/api/chat')` et l'ancien bouton d'envoi `adminChat` ne sont plus utilisés dans ce panneau.
+- `GET live-chat.ts/` : HTTP 200, 10 messages retournés.
+- `OPTIONS live-chat.ts/` : HTTP 204 ; CORS autorise GET, POST, OPTIONS ainsi que les en-têtes Content-Type et Authorization.
+- `GET /api/health` : HTTP 200, 3 morceaux.
+- `GET /api/content` : HTTP 200, 3 morceaux, 0 programme et 2 annonces.
+- `GET /api/account/me` sans jeton : HTTP 401.
+- `GET /api/admin/stats` sans jeton : HTTP 403, donc route protégée.
+- Le test `password-hash.test.ts` a été relancé : **PASS** pour création/connexion PBKDF2, rejet d'un mauvais mot de passe et migration d'un ancien hachage. L'avertissement Node `punycode` est toujours présent.
+- Aucun message de test n'a été publié : le POST de réponse réel nécessite une session administrateur autorisée. La réponse depuis le compte propriétaire n'a donc pas été testée dans un navigateur.
+
+## État des données au moment du contrôle
+- `radio_live_messages` : 10 messages ; ils sont conservés.
+- `radio_listener_sessions` : 9 sessions historiques ; ce nombre ne représente pas les auditeurs actuellement en direct.
+- `radio_listener_rewards` : 4 sessions de récompense, 0 point et 0 seconde cumulée.
+- `radio_author_listening` : 0 auteur, 0 session et 0 seconde mesurée.
+- `author_submissions` : 3 dépôts approuvés.
+- Comptes par rôle : 2 administrateurs et 2 auteurs ; aucune adresse e-mail ni donnée de connexion n'a été incluse dans cet audit.
+- `live_broadcast` : statut `off` lors de la dernière mise à jour enregistrée.
+- Le planificateur et l'état radio ne constituent pas un flux audio permanent.
+
+## GitHub et site public
+- Le dépôt GitHub est accessible. Les fichiers `radio.html`, `radio-config.js`, `jeux.html`, `author-studio.html` et `README.md` ont été relus.
+- `radio-config.js` conserve `streamUrl: ""` : aucun flux public permanent n'est configuré.
+- La page GitHub Pages n'a pas pu être chargée depuis l'environnement de vérification pendant ce passage. La présence des fichiers dans le dépôt est confirmée, mais la disponibilité publique de la page après ce passage n'est pas confirmée.
+- Aucun changement de code GitHub n'a été nécessaire pour cette correction du panneau d'administration ; ce rapport documente le changement Val Town.
+
+## Sécurité administrateur
+- Sans session, `/api/account/me` répond 401 et `/api/admin/stats` répond 403.
+- La page `/admin` sert son interface HTML en 200 ; les données restent protégées par les API.
+- Le code de réponse du chat contrôle le rôle administrateur en base avant insertion.
+- Aucune connexion réussie au compte administrateur propriétaire n'a été testée. Aucun mot de passe ni secret n'a été lu, révélé, réinitialisé ou modifié.
+
+## Priorités de reprise
+1. **P0 — Flux permanent :** installer un serveur Icecast/AzuraCast ou équivalent toujours allumé ; ne renseigner `radio-config.js` qu'après un test audio depuis un réseau extérieur.
+2. **P1 — Statistiques réelles :** instrumenter les démarrages, durées d'écoute, auditeurs uniques pseudonymisés et titres écoutés ; distinguer sessions historiques et auditeurs actifs.
+3. **P1 — Espace Auteur :** alimenter `radio_author_listening` à partir d'écoutes réellement confirmées et vérifier que chaque auteur ne voit que ses propres données.
+4. **P1 — Administration :** effectuer, avec le propriétaire, un test réel de connexion et une réponse de chat autorisée ; ne pas utiliser le secret de chat comme mot de passe de compte.
+5. **P1 — Ancien chat :** garder `content.chat` intact tant qu'une comparaison et une sauvegarde complète n'ont pas été faites ; décider ensuite s'il doit être archivé ou migré.
+6. **P2 — Programmes et annonces :** ajouter une programmation réelle et vérifier la distinction entre flashs RSS et annonces personnelles.
+7. **P2 — Direct des auteurs :** raccorder le micro au véritable transport audio ; le contrôle local du micro ne transmet pas encore le son.
+8. **P3 — Qualité :** tester le lecteur et les trois jeux sur téléphones et ordinateurs ; examiner l'avertissement `punycode` avant toute mise à jour de dépendance.
+
+---
+
 # Passage de maintenance — 23 novembre 2026
 
 ## Correction demandée du catalogue musical
