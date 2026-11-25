@@ -8,6 +8,7 @@
 - Le changement a été fusionné dans `main`, version 189. Le code n’a pas été remplacé et aucun mot de passe de compte existant n’a été lu ou modifié.
 - Le calcul des points du heartbeat a été isolé dans `calculateListeningReward`. La réponse `earnedThisPing` renvoie désormais le nombre réellement gagné lors de cette requête, au lieu de recalculer ce nombre après remise à zéro du reliquat. Le principe reste 1 point par 300 secondes cumulées, avec un maximum de 35 secondes créditées par heartbeat.
 - La page publique `radio.html` exploite désormais `earnedThisPing` et affiche une confirmation lorsqu’un heartbeat crédite un ou plusieurs points.
+- Limite anti-fraude constatée : le heartbeat repose encore sur les booléens envoyés par le navigateur (`playing` et `direct`). Le plafond de 35 secondes par appel limite l’accélération, mais ne prouve pas la réception du son. Tant que le flux permanent et ses statistiques serveur ne sont pas raccordés, les points ne constituent pas une preuve d’écoute réelle.
 
 ## Tests exécutés
 - Nouveau script Val Town `listener-accounts.test.ts` exécuté sur la branche de travail puis sur `main` : **PASS**.
