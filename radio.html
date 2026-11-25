@@ -499,6 +499,8 @@ async function pingListening(){
   listenerPoints=Number(d.points||0);listenerSeconds=Number(d.listenedSeconds||0);
   document.getElementById('listenerAccountInfo').textContent=(document.getElementById('listenerEmail').value||'Compte auditeur')+' · '+listenerSeconds+' secondes d’écoute cumulées';
   renderListenerRewards();render();
+  const earned=Number(d.earnedThisPing||0);
+  if(earned>0){const status=document.getElementById('listenerRewardStatus');if(status)status.textContent=earned===1?'Tu viens de gagner 1 point d’écoute.':'Tu viens de gagner '+earned+' points d’écoute.';}
  }catch(e){}
 }
 directPlayer.addEventListener('playing',()=>{pingListening();renderListenerRewards()});
