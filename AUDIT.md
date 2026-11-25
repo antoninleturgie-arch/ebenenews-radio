@@ -1,3 +1,49 @@
+# Passage de maintenance — 25 novembre 2026
+
+## Amélioration réelle : sécurité des comptes auditeurs et calcul des points
+- L’API indépendante des comptes auditeurs (`listener-accounts.ts`) utilisait PBKDF2-HMAC-SHA256 avec 150 000 itérations, alors que le système de comptes principal utilise 600 000.
+- Sur une branche isolée `listener-account-hardening`, les nouveaux comptes auditeurs utilisent maintenant 600 000 itérations.
+- Les comptes existants sans champ `passwordIterations` restent vérifiables avec l’ancien réglage de 150 000 itérations ; après une connexion réussie, leur hachage est recalculé à 600 000 sans changer le mot de passe.
+- La comparaison des hachages utilise une boucle à temps constant et le nombre d’itérations est borné entre 100 000 et 1 000 000 pour éviter des paramètres invalides.
+- Le changement a été fusionné dans `main`, version 189. Le code n’a pas été remplacé et aucun mot de passe de compte existant n’a été lu ou modifié.
+- Le calcul des points du heartbeat a été isolé dans `calculateListeningReward`. La réponse `earnedThisPing` renvoie désormais le nombre réellement gagné lors de cette requête, au lieu de recalculer ce nombre après remise à zéro du reliquat. Le principe reste 1 point par 300 secondes cumulées, avec un maximum de 35 secondes créditées par heartbeat.
+
+## Tests exécutés
+- Nouveau script Val Town `listener-accounts.test.ts` exécuté sur la branche de travail puis sur `main` : **PASS**.
+- Cas testés : validation d’un ancien hachage 150 000, production du hachage de migration 600 000, validation du nouveau hachage, rejet d’un mauvais mot de passe, rejet d’un nombre d’itérations invalide, attribution au seuil de 300 secondes, conservation du reliquat et plafonnement d’un heartbeat à 35 secondes.
+- Endpoint des comptes auditeurs `GET /` : HTTP 200 après fusion.
+- Endpoint privé `GET /me` sans jeton : HTTP 401.
+- `GET /api/health` du backend principal : HTTP 200, 3 morceaux.
+- Aucun compte de test n’a été créé et aucune connexion avec un vrai compte n’a été effectuée.
+
+## Vérifications publiques et état des services
+- GitHub Pages : accueil, `radio.html`, `jeux.html` et `author-studio.html` répondent tous HTTP 200.
+- La page Radio indique toujours que le flux permanent n’est pas configuré. `radio-config.js` conserve `streamUrl: ""`.
+- `/api/content` : 3 morceaux, 0 programme et 2 annonces au moment du contrôle.
+- `radio_live_messages` : 10 messages ; `radio_listener_sessions` : 9 sessions historiques ; `radio_listener_rewards` : 4 lignes ; `radio_author_listening` : 0 ligne ; `author_submissions` : 3 lignes.
+- Les comptes applicatifs principaux sont répartis en 2 administrateurs et 2 auteurs ; aucune adresse e-mail n’est reprise dans cet audit.
+- `live_broadcast` est toujours à l’état `off`. Le plan de contrôle ne transporte pas le son.
+- L’API des comptes auditeurs utilise un stockage séparé des comptes principaux ; les deux systèmes ne doivent pas être confondus.
+
+## Sécurité administrateur
+- `GET /api/account/me` sans session : HTTP 401.
+- `GET /api/admin/stats` sans session : HTTP 403 (contrôle déjà confirmé lors du passage précédent).
+- L’interface `/admin` peut servir son HTML ; les données doivent rester derrière les API protégées.
+- La variable d’environnement dédiée aux réponses du chat n’a pas été lue. Elle ne constitue pas une preuve de connexion réussie au compte administrateur.
+- Aucune connexion réussie au compte propriétaire n’a été testée. Aucun mot de passe n’a été deviné, révélé, réinitialisé ou modifié.
+
+## Priorités de reprise
+1. **P0 — Flux permanent :** installer un serveur Icecast/AzuraCast ou équivalent toujours allumé ; renseigner `radio-config.js` seulement après un test audio externe.
+2. **P1 — Statistiques d’écoute :** mesurer les démarrages, durées et auditeurs uniques pseudonymisés du flux réel ; distinguer ces données des simples sessions de compte.
+3. **P1 — Espace Auteur :** alimenter `radio_author_listening` depuis des lectures réellement confirmées et contrôler l’isolation des données par auteur.
+4. **P1 — Connexion administrateur :** faire un test de connexion autorisé au vrai compte et une réponse de chat depuis l’interface, sans lire ni modifier le secret.
+5. **P1 — Chat historique :** garder l’ancien stockage `content.chat` intact jusqu’à comparaison et sauvegarde ; aucune migration destructive.
+6. **P2 — Programmes et animateur :** ajouter une programmation réelle et distinguer les flashs RSS des annonces personnelles.
+7. **P2 — Direct des auteurs :** raccorder le microphone au serveur média ; le contrôle actuel est local uniquement.
+8. **P3 — Qualité :** tester les jeux et le lecteur sur appareils réels, puis examiner l’avertissement Node `punycode`.
+
+---
+
 # Passage de maintenance — 24 novembre 2026
 
 ## Amélioration réellement intégrée : chat public et administration réunis
