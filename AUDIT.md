@@ -7,6 +7,7 @@
 - La comparaison des hachages utilise une boucle à temps constant et le nombre d’itérations est borné entre 100 000 et 1 000 000 pour éviter des paramètres invalides.
 - Le changement a été fusionné dans `main`, version 189. Le code n’a pas été remplacé et aucun mot de passe de compte existant n’a été lu ou modifié.
 - Le calcul des points du heartbeat a été isolé dans `calculateListeningReward`. La réponse `earnedThisPing` renvoie désormais le nombre réellement gagné lors de cette requête, au lieu de recalculer ce nombre après remise à zéro du reliquat. Le principe reste 1 point par 300 secondes cumulées, avec un maximum de 35 secondes créditées par heartbeat.
+- La page publique `radio.html` exploite désormais `earnedThisPing` et affiche une confirmation lorsqu’un heartbeat crédite un ou plusieurs points.
 
 ## Tests exécutés
 - Nouveau script Val Town `listener-accounts.test.ts` exécuté sur la branche de travail puis sur `main` : **PASS**.
@@ -15,6 +16,7 @@
 - Endpoint privé `GET /me` sans jeton : HTTP 401.
 - `GET /api/health` du backend principal : HTTP 200, 3 morceaux.
 - Aucun compte de test n’a été créé et aucune connexion avec un vrai compte n’a été effectuée.
+- GitHub Actions « Vérifier le site radio », run 55 associé au commit `8562001e791bc5c66403ab7eb1abfa0da43ced60` : terminé avec la conclusion **success**.
 
 ## Vérifications publiques et état des services
 - GitHub Pages : accueil, `radio.html`, `jeux.html` et `author-studio.html` répondent tous HTTP 200.
