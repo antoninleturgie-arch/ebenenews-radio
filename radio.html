@@ -364,6 +364,7 @@ const LISTENER_API='https://ninjantox--180d7d4ae8eb11f1ae741607ee4eb77e.web.val.
 const LISTENER_TOKEN_KEY='ebeneListenerAccountToken';
 let listenerToken=localStorage.getItem(LISTENER_TOKEN_KEY)||'';
 let listenerPoints=0,listenerSeconds=0,listenerSpent=0,listenerOwned=[],listenerActive='';
+let listenerRewardsEnabled=null;
 let favorites=new Set();
 const shopCatalog=[
  {id:'gold-theme',name:'Thème Or',description:'Une apparence dorée exclusive pour la radio.',price:20,kind:'theme',value:'gold'},
@@ -470,6 +471,8 @@ function renderListenerRewards(){
  const directPlaying=!!(directPlayer.src&&!directPlayer.paused&&!directPlayer.ended);
  statusEl.textContent=!listenerToken?'Connecte-toi pour gagner et conserver tes points.'
   :!directPlayer.src?'Le flux direct n’est pas encore configuré. Les points commenceront dès que le direct sera disponible.'
+  :listenerRewardsEnabled===false?'Les récompenses sont désactivées côté serveur tant que le flux permanent n’a pas été vérifié.'
+  :listenerRewardsEnabled===null?'Vérification de l’activation des récompenses…'
   :directPlaying?'Écoute du direct détectée : 1 point toutes les 5 minutes.':'Mets le flux direct en lecture pour gagner des points.';
  const levels=[
   {at:0,name:'Curieux',description:'Tu découvres Ébénénews.'},
@@ -496,6 +499,7 @@ async function pingListening(){
  const directPlaying=!!(directPlayer.src&&!directPlayer.paused&&!directPlayer.ended&&!document.hidden);
  try{
   const d=await listenerApi('/heartbeat',{method:'POST',body:JSON.stringify({playing:directPlaying,direct:directPlaying})});
+  listenerRewardsEnabled=d.rewardsEnabled===true;
   listenerPoints=Number(d.points||0);listenerSeconds=Number(d.listenedSeconds||0);
   document.getElementById('listenerAccountInfo').textContent=(document.getElementById('listenerEmail').value||'Compte auditeur')+' · '+listenerSeconds+' secondes d’écoute cumulées';
   renderListenerRewards();render();
