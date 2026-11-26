@@ -358,3 +358,56 @@ Conserver le code et les médias utiles ; ne supprimer aucun ZIP ni fichier musi
 5. Tester le lecteur sur ordinateur et téléphone, avec clic utilisateur.
 6. Déployer un backend sécurisé pour authentification, chat et statistiques si ces fonctionnalités sont nécessaires.
 7. Vérifier les archives et l'historique Git avant toute suppression ou rotation de secrets.
+
+
+---
+
+# Passage de maintenance — 26 novembre 2026
+
+## Amélioration réelle : verrouillage serveur des récompenses d'écoute
+- Le heartbeat des comptes auditeurs acceptait les booléens `playing` et `direct` fournis par le navigateur. Sans flux public configuré, un client pourrait appeler directement l'API et simuler une lecture.
+- Sur une branche Val Town isolée `listener-rewards-safe-gate`, le serveur exige désormais le drapeau d'environnement `EBENE_LISTENER_REWARDS_ENABLED=true` avant de créditer du temps ou des points.
+- En l'absence du drapeau, le serveur conserve le solde et le temps déjà acquis, remet seulement `lastPingAt` à zéro, renvoie `earnedThisPing: 0` et `rewardsEnabled: false`. Aucun point ni seconde supplémentaire n'est crédité.
+- Le drapeau n'est pas configuré dans l'environnement actuel ; les récompenses restent donc volontairement désactivées. Ne l'activer qu'après installation et vérification d'un vrai flux. Même activé, ce garde-fou n'est pas une preuve anti-fraude complète : le heartbeat repose encore sur des déclarations du navigateur. La prochaine évolution devra utiliser des statistiques ou événements côté serveur média.
+- La branche a été testée puis fusionnée dans `main`, version 190. Aucun compte, mot de passe, solde, achat ou historique n'a été modifié.
+- La page publique `radio.html` affiche maintenant l'état `rewardsEnabled` renvoyé par le serveur et explique lorsque les récompenses sont désactivées côté serveur.
+
+## Tests et vérifications du passage
+- `listener-accounts.test.ts` sur la branche avant fusion : **PASS**. Cas couverts : hachage historique, migration PBKDF2 vers 600 000 itérations, rejet d'un mauvais mot de passe, rejet d'itérations invalides, drapeau de récompenses absent/inactif par défaut et activation explicite du helper, seuil de 300 secondes, conservation du reliquat et plafond de 35 secondes par heartbeat.
+- Le test est un test de logique pure ; aucun compte réel n'a été utilisé et aucun POST de heartbeat authentifié n'a été simulé.
+- Backend `GET /api/health` : HTTP 200, mode musique, 3 morceaux.
+- `GET /api/content` : HTTP 200, 3 morceaux, 0 programme, 6 annonces au moment du contrôle.
+- `GET /api/radio-state` : HTTP 200, mode musique, piste annoncée « hymne des ninjas — ninjantox ».
+- `GET /api/account/me` sans session : HTTP 401.
+- `GET /api/admin/stats` et `GET /api/admin/online` sans session : HTTP 403 `admin_required`. Le 403 confirme que ces routes existent et refusent les accès non authentifiés ; ce n'est pas un 404.
+- `GET /admin` : HTTP 200 pour le document HTML, qui présente une connexion obligatoire avant d'afficher les données.
+- `GET listener-accounts.ts/me` sans jeton : HTTP 401.
+- `GET broadcast-control.ts/` : HTTP 200, `audioTransport: not-configured`. `GET broadcast-control.ts/status` : HTTP 200, session `off`. Le chemin `/state` renvoie 404 ; le bon chemin de contrôle est `/status`.
+- La variable d'environnement dédiée aux réponses du chat existe et n'est pas vide, mais elle ne prouve pas une connexion réussie au compte administrateur. Sa valeur n'a pas été consultée. Aucun test de connexion réussi au vrai compte administrateur n'a été effectué.
+
+## Site public et dépôt
+- GitHub Pages a répondu HTTP 200 pour l'accueil, `radio.html`, `jeux.html` et `author-studio.html` via récupération publique.
+- L'accueil est une page d'ouverture avec un lien vers `radio.html`; la page Radio affiche clairement que le flux permanent n'est pas configuré.
+- `jeux.html` expose toujours les trois jeux : quiz ninja, mémoire et réflexes. Leur texte est présent sur la page publiée ; les interactions n'ont pas été testées dans un vrai navigateur mobile.
+- `author-studio.html` précise que le micro est contrôlé localement et que le transport audio vers les auditeurs n'est pas encore raccordé.
+- `radio-config.js` conserve `streamUrl: ""`. Aucun serveur média permanent n'est relié.
+- Le commit GitHub qui met à jour le retour d'état des récompenses dans `radio.html` est `d2318b4df114e3a210a86edf898a6a897ce6dbc5`. Les contrôles combinés du commit d'audit précédent ne retournaient aucun status check ; cela ne signifie ni succès ni échec d'un workflow.
+
+## État des données au moment du contrôle
+- `users` : 4 comptes ; `user_sessions` : 2 sessions.
+- `radio_live_messages` : 10 messages ; aucun message n'a été modifié.
+- `radio_listener_sessions` : 9 sessions historiques ; `radio_listener_rewards` : 4 lignes ; `radio_author_listening` : 0 ligne.
+- `author_submissions` : 3 dépôts ; `scheduled_announcements` : 0 ligne.
+- La bibliothèque contient 3 morceaux, 0 programme et 6 annonces exposées par `/api/content`. Les sessions historiques ne sont pas un nombre d'auditeurs actuellement en direct.
+- Ces chiffres proviennent de requêtes de comptage SQLite et des réponses API ; ils ne constituent pas une mesure d'audience temps réel.
+
+## Priorités de reprise
+1. **P0 — Flux permanent :** choisir/héberger un serveur média (Icecast/AzuraCast ou équivalent), obtenir une URL publique et vérifier une lecture audio depuis un réseau extérieur avant de renseigner `radio-config.js`.
+2. **P1 — Récompenses vérifiables :** garder le drapeau des récompenses désactivé tant que le flux n'est pas vérifié ; ensuite remplacer les déclarations navigateur par des événements/statistiques du serveur média avant toute activation réelle.
+3. **P1 — Statistiques d'audience :** collecter les démarrages, durées et auditeurs uniques pseudonymisés depuis le serveur média ; séparer les comptes connectés des auditeurs.
+4. **P1 — Espace Auteur :** alimenter `radio_author_listening` avec des lectures confirmées et tester l'isolation des données par auteur.
+5. **P1 — Connexion administrateur :** effectuer un test autorisé avec le vrai compte et une réponse de chat ; aucun mot de passe ne doit être lu ou changé pour ce diagnostic.
+6. **P2 — Direct des auteurs :** raccorder le microphone au transport audio réel ; le contrôle de session seul ne transmet pas le son.
+7. **P2 — Chat historique :** garder l'ancien stockage intact jusqu'à sauvegarde et comparaison ; ne pas supprimer les 10 messages du chat public.
+8. **P2 — Programmes et animateur :** ajouter une programmation réelle et améliorer les annonces sans interrompre les musiques.
+9. **P3 — Qualité :** tester les jeux, le lecteur et le Studio Auteur sur appareils réels ; examiner l'avertissement Node `punycode` avant toute mise à jour de dépendance.
