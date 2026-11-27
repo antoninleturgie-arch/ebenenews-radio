@@ -6,7 +6,7 @@
 - `announcement-utils.js` est renforcé : il garde le dédoublonnage exact et regroupe les annonces du même flux RSS lorsque chacune contient au moins 12 mots et que leur similarité Jaccard atteint 0,82. L'ordre d'arrivée est conservé et la première annonce reste affichée.
 - Le filtrage reste uniquement côté page Radio : aucune donnée source n'est effacée ou modifiée. Les annonces courtes et les annonces de sources différentes ne sont pas regroupées par similarité, sauf correspondance exacte.
 - Tests ajoutés pour les trois variantes réelles du sujet, les accents, les sujets distincts, les entrées invalides et l'absence de mutation du tableau.
-- Modification en préparation sur la branche `rss-near-duplicate-filter-20261127`; elle sera fusionnée uniquement après succès de la CI.
+- Le PR #2 a été fusionné dans `main` après succès de la CI (run 63). Au dernier contrôle, la validation après fusion (run 64) et le déploiement GitHub Pages (run 107) étaient en file d'attente.
 
 ---
 
