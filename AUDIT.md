@@ -1,3 +1,15 @@
+# Complément de maintenance — 27 novembre 2026
+
+## Amélioration : détection des doublons RSS proches
+- Le premier filtre exact a été confronté aux 9 annonces actuellement renvoyées par `/api/content`. Il ne supprimait pas les variantes de titre du sujet OM–Levski, car leurs textes complets diffèrent légèrement.
+- Mesure sur les trois annonces concernées : similarité Jaccard des mots normalisés de 0,903, 0,875 et 0,967. Les six autres annonces sont des sujets distincts.
+- `announcement-utils.js` est renforcé : il garde le dédoublonnage exact et regroupe les annonces du même flux RSS lorsque chacune contient au moins 12 mots et que leur similarité Jaccard atteint 0,82. L'ordre d'arrivée est conservé et la première annonce reste affichée.
+- Le filtrage reste uniquement côté page Radio : aucune donnée source n'est effacée ou modifiée. Les annonces courtes et les annonces de sources différentes ne sont pas regroupées par similarité, sauf correspondance exacte.
+- Tests ajoutés pour les trois variantes réelles du sujet, les accents, les sujets distincts, les entrées invalides et l'absence de mutation du tableau.
+- Modification en préparation sur la branche `rss-near-duplicate-filter-20261127`; elle sera fusionnée uniquement après succès de la CI.
+
+---
+
 # Passage de maintenance — 27 novembre 2026
 
 ## Amélioration progressive : dédoublonnage des flashs RSS sur la page Radio
