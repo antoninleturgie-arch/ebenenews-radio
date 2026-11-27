@@ -6,7 +6,7 @@
 - Ajout de `announcement-utils.js`, qui normalise les résumés (casse, accents, ponctuation, espaces) et conserve la première occurrence de chaque annonce.
 - `radio.html` applique ce filtrage à la liste affichée et au journal parlé. Le flux API et les enregistrements source ne sont pas modifiés ; aucune annonce n'est supprimée de la base.
 - Ajout de tests automatisés pour les doublons, les différences de casse/accents/ponctuation, la conservation de sujets distincts et les entrées invalides.
-- Modification proposée sur la branche `dedupe-radio-announcements-20261127` avant validation CI ; aucune mise en production n'est présumée à ce stade.
+- Le PR #1 a été fusionné dans `main` le 27 novembre après succès de la CI sur le PR (run 60). La validation après fusion (run 61) et le déploiement GitHub Pages (run 105) ont également terminé avec succès.
 
 ## Vérifications réelles du 27 novembre
 - Dépôt GitHub public et accessible ; branche par défaut `main`, dernier commit contrôlé `371894791ef31fb69a26c801b24cee02c6b8513b`.
