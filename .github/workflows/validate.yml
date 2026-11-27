@@ -22,9 +22,13 @@ jobs:
           test -s radio.html
           test -s jeux.html
           test -s radio-config.js
+          test -s announcement-utils.js
+          test -s announcement-utils.test.js
           test -s streaming/README.md
           test -s SECURITY.md
           grep -q 'setupDirectStream' radio.html
+          grep -q 'announcement-utils.js' radio.html
+          grep -q 'uniqueAnnouncements' radio.html
           grep -q 'id="player"' radio.html
           grep -q 'id="autoRadioButton"' radio.html
           grep -q 'href="./jeux.html"' radio.html
@@ -37,6 +41,8 @@ jobs:
         run: |
           set -e
           node --check radio-config.js
+          node --check announcement-utils.js
+          node --test announcement-utils.test.js
           node --check server-bridge.js
           python3 - <<'PY'
           from pathlib import Path

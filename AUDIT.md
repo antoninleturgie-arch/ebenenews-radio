@@ -1,3 +1,37 @@
+# Passage de maintenance — 27 novembre 2026
+
+## Amélioration progressive : dédoublonnage des flashs RSS sur la page Radio
+- Le contrôle réel de `GET /api/content` renvoie 3 morceaux, aucun programme et 9 annonces au moment du passage.
+- Les trois premières annonces concernaient le même sujet OM–Levski Sofia, avec des titres différents mais un résumé identique. Elles étaient affichées plusieurs fois et pouvaient être répétées dans le journal parlé.
+- Ajout de `announcement-utils.js`, qui normalise les résumés (casse, accents, ponctuation, espaces) et conserve la première occurrence de chaque annonce.
+- `radio.html` applique ce filtrage à la liste affichée et au journal parlé. Le flux API et les enregistrements source ne sont pas modifiés ; aucune annonce n'est supprimée de la base.
+- Ajout de tests automatisés pour les doublons, les différences de casse/accents/ponctuation, la conservation de sujets distincts et les entrées invalides.
+- Modification proposée sur la branche `dedupe-radio-announcements-20261127` avant validation CI ; aucune mise en production n'est présumée à ce stade.
+
+## Vérifications réelles du 27 novembre
+- Dépôt GitHub public et accessible ; branche par défaut `main`, dernier commit contrôlé `371894791ef31fb69a26c801b24cee02c6b8513b`.
+- Dernier workflow GitHub Actions observé : run 59, associé à ce commit, conclusion `success`.
+- GitHub Pages est activé dans les métadonnées du dépôt. Les quatre URL publiques testées avec le navigateur de vérification ont renvoyé un refus d'accès de l'outil ; la disponibilité HTTP du site n'est donc pas confirmée par ce passage.
+- Val Town `ninjantox/ebenenews-radio` : branche `main`, version du projet 190 ; endpoint principal répond aux contrôles API.
+- `GET /api/content` : HTTP 200, 3 morceaux, 0 programme, 9 annonces. Les 3 premières annonces sont des variantes du même résumé OM–Levski.
+- `GET /api/radio-state` : HTTP 200, mode `music`, titre courant déclaré `hymne des ninjas — ninjantox`. Cela confirme l'état logique du moteur, pas la réception d'un flux audio.
+- `GET /api/account/me` sans session : HTTP 401.
+- La variable d'environnement `EBENE_ADMIN_PASSWORD` est présente selon les métadonnées Val Town et marquée non vide ; sa valeur n'a pas été lue. Cette variable est documentée comme secret de réponses administrateur du chat et ne prouve pas la connexion du compte administrateur.
+- Aucune connexion au compte propriétaire n'a été tentée et aucun secret n'a été consulté ou modifié.
+- Le code public `radio-config.js` conserve `streamUrl: ""` : aucun flux audio permanent n'est configuré.
+
+## Priorités conservées
+1. **P0 — Flux permanent :** installer un serveur Icecast/AzuraCast ou équivalent toujours allumé ; renseigner l'URL publique uniquement après un test audio externe.
+2. **P1 — Statistiques fiables :** mesurer les démarrages, durées et auditeurs uniques à partir du serveur audio, pas des seuls signaux navigateur.
+3. **P1 — Récompenses :** garder les crédits désactivés tant qu'ils ne peuvent pas être vérifiés par le serveur de diffusion.
+4. **P1 — Espace Auteur :** alimenter les statistiques par auteur et contenu et tester l'isolation des données.
+5. **P1 — Connexion administrateur :** vérifier une connexion réelle autorisée et une réponse au chat depuis l'interface, sans lire ni modifier le secret.
+6. **P2 — Chat historique :** comparer et sauvegarder l'ancien stockage avant toute migration non destructive.
+7. **P2 — Programmes et animateur :** ajouter une programmation réelle et distinguer les flashs RSS des annonces personnelles.
+8. **P3 — Qualité :** tester les jeux et le lecteur sur téléphone et ordinateur ; examiner l'avertissement Node `punycode`.
+
+---
+
 # Passage de maintenance — 25 novembre 2026
 
 ## Amélioration réelle : sécurité des comptes auditeurs et calcul des points
