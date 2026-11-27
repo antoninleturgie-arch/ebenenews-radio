@@ -87,6 +87,7 @@
 <footer class="footer">Ébénénews 72.8 · <a href="https://github.com/antoninleturgie-arch/ebenenews-radio" style="color:#d4af37">Dépôt GitHub</a></footer>
 </main>
 <script src="./radio-config.js"></script>
+<script src="./announcement-utils.js"></script>
 <script>
 'use strict';
 const directPlayer=document.getElementById('directPlayer');
@@ -157,7 +158,8 @@ async function load(){
   const d=await r.json();
   music=Array.isArray(d.music)?d.music.filter(m=>m&&typeof m.url==='string'&&m.url.trim()):[];
   render();
-  const arr=Array.isArray(d.announcements)?d.announcements:[];
+  const rawAnnouncements=Array.isArray(d.announcements)?d.announcements:[];
+  const arr=window.EbeneAnnouncements?window.EbeneAnnouncements.uniqueAnnouncements(rawAnnouncements):rawAnnouncements;
   newsBulletinItems=arr.filter(x=>x&&typeof x.text==='string'&&x.text.trim()&&(x.kind==='auto-news'||x.source==='Le Monde')).slice(0,5).map(x=>x.text.trim());
   document.getElementById('newsStatus').textContent=newsBulletinItems.length?newsBulletinItems.length+' actualité(s) prête(s) à être lue(s).':'Aucune actualité disponible pour le moment.';
   const a=document.getElementById('announcements');
